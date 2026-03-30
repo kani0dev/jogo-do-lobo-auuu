@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const jogadorController = require('../controllers/jogadorController');
+const jogadorController = require('../controllers/JogadorController');
 
 // Criar jogador (quando começar o jogo)
 router.post('/jogador', jogadorController.criarJogador);
