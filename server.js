@@ -1,11 +1,11 @@
 const express = require('express');
-const cors = require('cors');//talvez nem precise, o html vai ser entregue pelo prorpio servidor
-require('dotenv').config();
-
+const cors = require('cors');//talvez nem precise, o html vai ser entregue pelo prorpio  (de acrodo com o gemini)
 //importação de funções de servidor(necessário pro socket.io funcionar)
 const { createServer } = require('node:http');
 const { Server } = require('socket.io');
 const { join } = require('node:path');
+require('dotenv').config();
+
 
 const connectDB = require('./src/database/db');
 const jogadorRoutes = require('./src/routes/JogadorRoutes');
@@ -23,6 +23,7 @@ connectDB();
 app.use(cors()); //** 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(join(__dirname, 'src/frontend')));
 
 // Configurar EJS como motor de template
 app.set('view engine', 'ejs');
@@ -36,7 +37,7 @@ app.use('/api', jogadorRoutes);
 
 // ROTA DA PÁGINA DE LOGIN (é isso que estava faltando!)
 app.get('/', (req, res) => {
-    res.sendFile(join(__dirname, '/src/index.html'))
+    res.sendFile(join(__dirname, '/src/frontend/index.html'))
     /*res.json({
         nome: 'API Lobitos',
         versao: '1.0',
@@ -56,12 +57,21 @@ app.use('*', (req, res) => {
 
 //Funções do socket.io
 io.on('connection', (socket) => {
-    console.log('a user connected');
+    console.log(socket.id + ' connected');
+
+    socket.on("entrar", (cod) => {
+        //Logica de entrar na sala
+        console.log(socket.id + " conectou na sala " + cod)
+    })
+
+    socket.on("criar", () => {
+        //Lógica de criar sala
+    })
+
     socket.on('disconnect', () => {
-        console.log('user disconnected');
+        console.log(socket.id + ' disconnected');
     });
 });
-
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
