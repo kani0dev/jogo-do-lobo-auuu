@@ -8,22 +8,9 @@
 <body>
     <p>Código da sala</p>
     <input id="codigo" type="text">
-    <button>ENTRAR</button>
+    <button id="entrar">ENTRAR</button>
+    <button id="criar">CRIAR</button>
     <script src="../../socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-
-        const input = document.querySelector("#codigo")
-        const button = document.querySelector("button")
-
-        button.addEventListener("click", () => {
-            if(input.value){
-                socket.emit("entrar", input.value)
-                input.value = ''
-            }
-        })
-
-
-    </script>
+    <script src="js/main.js"></script>
 </body>
 </html>
