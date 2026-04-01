@@ -1,34 +1,34 @@
 const express = require('express');
-const cors = require('cors');//talvez nem precise, o html vai ser entregue pelo prorpio  (de acrodo com o gemini)
-//importação de funções de servidor(necessário pro socket.io funcionar)
-const { createServer } = require('node:http');
-const { Server } = require('socket.io');
-const { join } = require('node:path');
+const cors = require('cors'); //? talvez nem precise, o html vai ser entregue pelo prorpio server.js (de acrodo com o gemini)
+const connectDB = require('./src/database/db');//importa a função de conexão do banco de dados
+const jogadorRoutes = require('./src/routes/JogadorRoutes');//importa as rotas do CRUD de jogadores
+
+//* Importação de funções pro socket.io funcionar
+const { createServer } = require('node:http'); //cria um server "cru" a partir do express, pq o socket só funciona assim
+const { Server } = require('socket.io'); //importa o socket.io
+const { join } = require('node:path'); //importa o join, necessário pq o express não interpreta rotas relativas
+const GameSocket = require('./src/sockets/GameSocket.js') //importa o "GameSocket", onde a lógica do jogo existe
 require('dotenv').config();
-
-
-const connectDB = require('./src/database/db');
-const jogadorRoutes = require('./src/routes/JogadorRoutes');
 
 const app = express();
 
-//configuração do socket.io
-const server = createServer(app)
+//* Configuração do socket.io
+const server = createServer(app) //cria o server "cru" a partir do express
 const io = new Server(server);
+GameSocket(io) //envia o "io", objeto principal do socket.io, como parametro pro GameSocket.io
 
-// Conectar ao banco de dados
-connectDB();
+connectDB();// Conecta ao banco de dados
 
-// Middlewares
-app.use(cors()); //** 
+//* Middlewares
+app.use(cors()); // ?
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(join(__dirname, 'src/frontend')));
+app.use(express.static(join(__dirname, 'src/frontend'))); //faz com que o index.html possa acessar arquivos estáticos da pasta "frontend"
 
-// Rotas da API
+//* Rotas da API
 app.use('/api', jogadorRoutes);
 
-// Rota de teste
+//* Rota padrão
 app.get('/', (req, res) => {
     res.sendFile(join(__dirname, '/src/frontend/index.html'))
     /*res.json({
@@ -43,28 +43,11 @@ app.get('/', (req, res) => {
     });*/
 });
 
-// Tratamento de erro 404
+//* Tratamento de erro 404
 app.use('*', (req, res) => {
     res.status(404).json({ error: 'Rota não encontrada' });
 });
 
-//Funções do socket.io
-io.on('connection', (socket) => {
-    console.log(socket.id + ' connected');
-
-    socket.on("entrar", (cod) => {
-        //Logica de entrar na sala
-        console.log(socket.id + " conectou na sala " + cod)
-    })
-
-    socket.on("criar", () => {
-        //Lógica de criar sala
-    })
-
-    socket.on('disconnect', () => {
-        console.log(socket.id + ' disconnected');
-    });
-});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
