@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors'); //? talvez nem precise, o html vai ser entregue pelo prorpio server.js (de acrodo com o gemini)
+const cors = require('cors'); //! talvez nem precise, o html vai ser entregue pelo prorpio server.js (de acrodo com o gemini)
 const connectDB = require('./src/database/db');//importa a função de conexão do banco de dados
 const jogadorRoutes = require('./src/routes/JogadorRoutes');//importa as rotas do CRUD de jogadores
 
@@ -11,16 +11,10 @@ const GameSocket = require('./src/sockets/GameSocket.js') //importa o "GameSocke
 require('dotenv').config();
 
 const app = express();
-
-//* Configuração do socket.io
-const server = createServer(app) //cria o server "cru" a partir do express
-const io = new Server(server);
-GameSocket(io) //envia o "io", objeto principal do socket.io, como parametro pro GameSocket.io
-
 connectDB();// Conecta ao banco de dados
 
 //* Middlewares
-app.use(cors()); // ?
+app.use(cors()); //!
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(join(__dirname, 'src/frontend')));
@@ -55,6 +49,10 @@ app.use('*', (req, res) => {
     res.status(404).json({ error: 'Rota não encontrada' });
 });
 
+//* Configuração do socket.io
+const server = createServer(app) //cria o server "cru" a partir do express
+const io = new Server(server, {connectionStateRecovery: {}});//"connectionRecovery" lida com breves desconexões
+GameSocket(io) //envia o "io", objeto principal do socket.io, como parametro pro GameSocket.io
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
