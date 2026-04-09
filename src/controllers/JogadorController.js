@@ -81,3 +81,18 @@ exports.deletarJogador = async (req, res) => {
         res.status(500).json({ error: 'Erro ao deletar' });
     }
 };
+
+// Rota de login (a ser implementada)
+exports.login = async (req, res) => {
+    try {
+        const { nome } = req.body;
+        let jogador = await Jogador.findOne({ nome: nome.trim() });
+        
+        if (!jogador) {
+            jogador = await Jogador.create({ nome: nome.trim() });
+        }
+        res.json(jogador);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao processar login' });
+    }
+};

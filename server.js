@@ -1,44 +1,47 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const connectDB = require('./src/database/db');
 const jogadorRoutes = require('./src/routes/jogadorRoutes');
 
 const app = express();
-
-// Conectar ao banco de dados
 connectDB();
-
-// Middlewares
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Configurar EJS como motor de template
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Servir arquivos estáticos (CSS, imagens)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Rotas da API
 app.use('/api', jogadorRoutes);
 
-// Rota de teste
+// ROTA DA PÁGINA DE LOGIN (é isso que estava faltando!)
 app.get('/', (req, res) => {
-    res.json({
-        nome: 'API Lobitos',
-        versao: '1.0',
-        endpoints: {
-            cadastrar: 'POST /api/jogador',
-            buscar: 'GET /api/jogador/:nome',
-            listar: 'GET /api/jogadores',
-            deletar: 'DELETE /api/jogador/:id'
-        }
-    });
+    res.render('login');
 });
 
-// Tratamento de erro 404
-app.use('*', (req, res) => {
-    res.status(404).json({ error: 'Rota não encontrada' });
+// Rota para processar o login
+app.post('/entrar', (req, res) => {
+    const { nome } = req.body;
+    console.log("Nome recebido:", nome);
+    res.redirect(`/jogo?nome=${encodeURIComponent(nome)}`);
+});
+
+// Rota da página do jogo
+app.get('/jogo', (req, res) => {
+    const nome = req.query.nome;
+    res.render('jogo', { nome });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🎮 Servidor rodando na porta ${PORT}`);
-    console.log(`📝 API disponível em: http://localhost:${PORT}`);
+    console.log(` Servidor rodando na porta ${PORT}`);
+    console.log(` Acesse: http://localhost:${PORT}`);
 });
