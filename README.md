@@ -1,26 +1,36 @@
-# como rodar esse projeto 
-## oque você vai precisar para rodar o projeto:
-- git 
-- node.js
-- npm ou yarn
-- docker
-- docker composer 
 
-primeiro clone do repo do github 
+# Como Rodar o Projeto
+
+## Tecnologias Utilizadas
+- Node.js   
+-  NPM / Yarn
+- Docker & Docker Compose
+
+1. Clonar o Repositório
+
 ```bash
 git clone https://github.com/kani0dev/jogo-do-lobo-auuu.git
 ```
-mudar para diretorio do projeto e entao installar as dependecias do node 
+2. Acessar a Pasta do Projeto
 
+  
 ```bash
-cd jogo-do-lobo-auuu/
 
-npm install
+cd jogo-do-lobo-auu
 ```
-agora so falta buildar o docker container e rodar o projeto
 
+3. Instalar as Dependências
 ```bash
-docker compose up -d 
 
-npm run start
+  npm install
+```
+
+4. Buildar o Docker Compose
+```bash
+
+  docker-compose build
+```
+5. Iniciar o Projeto
+```bash
+  npm run start
 ```
