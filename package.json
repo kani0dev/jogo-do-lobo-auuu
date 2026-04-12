@@ -1,7 +1,6 @@
 {
   "name": "jogo-lobitos",
   "version": "1.0.0",
-  "type": "commonjs",
   "description": "API para jogo Lobitos",
   "main": "server.js",
   "scripts": {
