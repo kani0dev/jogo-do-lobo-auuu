@@ -20,3 +20,5 @@ export function CreateRoom(socket){
     }
     return Rooms[code]
 }
+
+export default CreateRoom;
