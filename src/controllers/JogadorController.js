@@ -4,11 +4,11 @@ const bcrypt = require('bcrypt')
 // Criar jogador (cadastro único)
 exports.criarJogador = async (req, res) => {
     try {
-        const { nome } = req.body;
+        const { nome,senha } = req.body;
         
-        if (!nome || nome.trim() === '') {
+        if (!nome || !senha) {
             return res.status(400).json({ 
-                error: 'Nome é obrigatório' 
+                error: 'Senha e Nome são obrigatórios' 
             });
         }
 
@@ -18,10 +18,14 @@ exports.criarJogador = async (req, res) => {
                 error: 'Este nome já está em uso!' 
             });
         }
-
-        const jogador = await Jogador.create({ nome: nome.trim() });
-   
         const hash_senha = await bcrypt.hash(jogador.senha, 10);
+
+        const jogador = await Jogador.create({ 
+        nome: nome.trim(),
+        senha: hash_senha
+    });
+   
+        
 
         res.status(201).json({
             success: true,
@@ -29,7 +33,6 @@ exports.criarJogador = async (req, res) => {
             jogador: {
                 id: jogador._id,
                 nome: jogador.nome,
-                senha: hash_senha,
                 dataCadastro: jogador.dataCadastro
             }
         });
