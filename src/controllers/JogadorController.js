@@ -1,4 +1,5 @@
 const Jogador = require('../models/Jogador');
+const bcrypt = require('bcrypt')
 
 // Criar jogador (cadastro único)
 exports.criarJogador = async (req, res) => {
@@ -19,18 +20,21 @@ exports.criarJogador = async (req, res) => {
         }
 
         const jogador = await Jogador.create({ nome: nome.trim() });
-        
+   
+        const hash_senha = await bcrypt.hash(jogador.senha, 10);
+
         res.status(201).json({
             success: true,
             message: 'Jogador cadastrado!',
             jogador: {
                 id: jogador._id,
                 nome: jogador.nome,
+                senha: hash_senha,
                 dataCadastro: jogador.dataCadastro
             }
         });
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao cadastrar' });
+        res.status(500).json({ error: error });
     }
 };
 

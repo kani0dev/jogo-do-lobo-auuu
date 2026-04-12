@@ -8,6 +8,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "ejs": "^5.0.1",
@@ -18,4 +19,3 @@
     "nodemon": "^2.0.22"
   }
 }
-
