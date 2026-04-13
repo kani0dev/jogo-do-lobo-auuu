@@ -74,7 +74,7 @@ exports.listarJogadores = async (req, res) => {
             jogadores
         });
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao listar' });
+        res.status(500).json({ error});
     }
 };
 
