@@ -19,22 +19,22 @@ app.use(cors()); //!
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Configurar EJS como motor de template
+//* Configurar EJS como motor de template
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Servir arquivos estáticos (CSS, imagens)
+//* Servir arquivos estáticos (CSS, imagens)
 app.use(express.static(path.join(__dirname, 'public')));
 
 //* Rotas da API
 app.use('/api', jogadorRoutes);
 
-// ROTA DA PÁGINA DE LOGIN (é isso que estava faltando!)
+//* ROTA DA PÁGINA DE LOGIN (é isso que estava faltando!)
 app.get('/', (req, res) => {
     res.render('login');
 });
 
-// Rota para processar o login
+//* Rota para processar o login
 app.post('/entrar', (req, res) => {
     const { nome } = req.body;
     console.log("Nome recebido:", nome);
