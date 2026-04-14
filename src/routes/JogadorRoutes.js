@@ -5,6 +5,8 @@ const jogadorController = require('../controllers/JogadorController');
 // Criar jogador (quando começar o jogo)
 router.post('/jogador', jogadorController.criarJogador);
 
+router.post('/login', jogadorController.login); // Rota de login (a ser implementada)
+
 // Listar todos (admin)
 router.get('/jogadores', jogadorController.listarJogadores);
 
