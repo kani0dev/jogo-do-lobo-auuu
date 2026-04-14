@@ -1,5 +1,7 @@
 const Jogador = require('../models/Jogador');
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const jwt_secret = `${process.env.JWTSECRET}`
 
 // Criar jogador (cadastro único)
 exports.criarJogador = async (req, res) => {
@@ -88,14 +90,25 @@ exports.deletarJogador = async (req, res) => {
 // Rota de login (a ser implementada)
 exports.login = async (req, res) => {
     try {
-        const { nome } = req.body;
-        let jogador = await Jogador.findOne({ nome: nome.trim() });
+        const { nome,senha} = req.body;
+        const jogador = await Jogador.findOne({ nome });
+        const hash_senha = await bcrypt.hash(senha,10);
+
+        console.log(nome == jogador.nome ) 
+        console.log(await bcrypt.compare(hash_senha,jogador.senha));
+        console.log(hash_senha);
+        console.log(jogador.senha);
         
-        if (!jogador) {
-            jogador = await Jogador.create({ nome: nome.trim() });
+        
+        console.log(jogador);
+        
+
+        if(nome == jogador.nome){
+            const token = jwt.sign(jogador,jwt_secret, { expiresIn : '1h'});
+            return res.json({token});
         }
-        res.json(jogador);
+        return res.status(404).json("usuario nao encontrado")
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao processar login' });
+        res.status(500).json({ error});
     }
 };
