@@ -1,6 +1,6 @@
-const RoomManager = require('../managers/RoomManager')
+const RoomManager = require('../managers/RoomManager.js')
 
-export function handleCreateRoom(socket){
+exports.handleCreateRoom = (socket) => {
     const newRoom = RoomManager.CreateRoom(socket.id)
     socket.join(newRoom.id)
 }

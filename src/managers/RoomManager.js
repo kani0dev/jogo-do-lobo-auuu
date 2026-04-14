@@ -1,6 +1,6 @@
 var Rooms = {}
 
-export function GetRandomCode(){
+exports.GetRandomCode = () => {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     var code = ''
     for(var i = 0; i <= 6; i++){
@@ -9,14 +9,14 @@ export function GetRandomCode(){
     return code
 }
 
-export function CreateRoom(socket){
+exports.CreateRoom = (socket) => {
     const code = GetRandomCode()
     //Placeholder
     Rooms[code] = {
-        "owner": OwnerId,
-        "state":"night",
-        "players":[],
-        "privacy":"public"
+        "dono": socket.id,//? talvez(?)
+        "estado":"noite",
+        "jogadores":[],
+        "privacidade":"publico"
     }
     return Rooms[code]
 }
