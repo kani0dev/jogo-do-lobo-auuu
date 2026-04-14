@@ -18,15 +18,11 @@ exports.criarJogador = async (req, res) => {
                 error: 'Este nome já está em uso!' 
             });
         }
-        const hash_senha = await bcrypt.hash(jogador.senha, 10);
-
-        const jogador = await Jogador.create({ 
-        nome: nome.trim(),
+        const hash_senha = await bcrypt.hash(senha, 10);
+        const jogador = await Jogador.create({
+        nome: nome, 
         senha: hash_senha
     });
-   
-        
-
         res.status(201).json({
             success: true,
             message: 'Jogador cadastrado!',
@@ -37,7 +33,7 @@ exports.criarJogador = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: error });
+        res.status(500).json({ error });
     }
 };
 
