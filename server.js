@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
+const endpointAuth = require("./src/managers/JWTAuth")
 
 const connectDB = require('./src/database/db');
 const jogadorRoutes = require('./src/routes/JogadorRoutes');
@@ -27,15 +28,20 @@ app.get('/', (req, res) => {
     res.render('login');
 });
 
+
 // Rota para processar o login
-app.post('/entrar', (req, res) => {
-    const { nome } = req.body;
+app.post('/entrar',endpointAuth, (req, res) => { 
+    let { nome } = req.body;
+
     console.log("Nome recebido:", nome);
+    console.log(token);
+    
     res.redirect(`/jogo?nome=${encodeURIComponent(nome)}`);
 });
 
 // Rota da página do jogo
-app.get('/jogo', (req, res) => {
+app.get('/jogo',(req, res) => {
+
     const nome = req.query.nome;
     res.render('jogo', { nome });
 });

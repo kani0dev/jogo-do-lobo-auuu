@@ -86,4 +86,25 @@
         </div>
     </div>
 </body>
+<script>
+    const token = localStorage.getItem('token_lobitos');
+
+    if (!token) {
+        // Se não tem token, nem deixa ver a página
+        alert("Sessão expirada. Faça login novamente.");
+        window.location.href = '/login'; 
+    } else {
+        // Se tem token, você pode buscar os dados do jogador via fetch
+        fetch('/api/dados-do-jogo', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(res => {
+            if (res.status === 401) window.location.href = '/';
+            return res.json();
+        })
+        .then(dados => {
+            console.log("Jogo carregado para:", dados.nome);
+        });
+    }
+</script>
 </html>

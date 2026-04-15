@@ -50,15 +50,43 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h1>Login</h1>
-        <form action="/entrar" method="POST">
-        <input type="text"
-            name="nome"
-            placeholder="Digite seu nome de usuário"
-            required>   
-            <button type="submit">Entrar</button>
-        </form>
-    </div>
+  <div class="login-container">
+    <h1>Login</h1>
+    <form id="loginForm"> <input type="text" id="nome" name="nome" placeholder="Nome de usuário" required>   
+        <input type="password" id="senha" name="senha" placeholder="*****" required>   
+        <button type="submit">Entrar</button>
+    </form>
+</div>
+
 </body> 
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault(); // Impede o EJS de recarregar a página
+
+        const nome = document.getElementById('nome').value;
+        const senha = document.getElementById('senha').value;
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome, senha })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.token) {
+                // SALVA NO LOCALSTORAGE DO NAVEGADOR
+                localStorage.setItem('token_lobitos', data.token);
+                
+                // Redireciona para a rota do jogo
+                window.location.href = '/jogo';
+            } else {
+                alert(data.error || 'Falha no login');
+            }
+        } catch (err) {
+            console.error('Erro ao conectar:', err);
+        }
+    });
+</script> 
 </html>
