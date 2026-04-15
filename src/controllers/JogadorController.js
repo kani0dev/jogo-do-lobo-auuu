@@ -90,25 +90,34 @@ exports.deletarJogador = async (req, res) => {
 // Rota de login (a ser implementada)
 exports.login = async (req, res) => {
     try {
-        const { nome,senha} = req.body;
-        const jogador = await Jogador.findOne({ nome });
-        const hash_senha = await bcrypt.hash(senha,10);
+        const { nome, senha } = req.body;
 
-        console.log(nome == jogador.nome ) 
-        console.log(await bcrypt.compare(hash_senha,jogador.senha));
-        console.log(hash_senha);
-        console.log(jogador.senha);
+        const jogador = await Jogador.findOne({ nome: nome.trim() });
         
-        
-        console.log(jogador);
-        
-
-        if(nome == jogador.nome){
-            const token = jwt.sign(jogador,jwt_secret, { expiresIn : '1h'});
-            return res.json({token});
+        if (!jogador) {
+            return res.status(401).json({ error: "Credenciais inválidas" });
         }
-        return res.status(404).json("usuario nao encontrado")
+
+        const senhaCorreta = await bcrypt.compare(senha, jogador.senha);
+
+        if (senhaCorreta) {
+            const token = jwt.sign(
+                { id: jogador._id, nome: jogador.nome }, 
+                process.env.JWTSECRET, 
+                { expiresIn: '1h' }
+            );
+
+            return res.json({ 
+                success: true,
+                token,
+                jogador: { id: jogador._id, nome: jogador.nome } 
+            });
+        }
+
+        return res.status(401).json({ error: "Credenciais inválidas" });
+
     } catch (error) {
-        res.status(500).json({ error});
+        console.error(error);
+        res.status(500).json({ error: "Erro interno no servidor" });
     }
 };
