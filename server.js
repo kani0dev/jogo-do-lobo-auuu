@@ -14,6 +14,11 @@ require('dotenv').config();
 const app = express();
 connectDB();// Conecta ao banco de dados
 
+//* Configuração do socket.io
+const server = createServer(app) //cria o server "cru" a partir do express
+const io = new Server(server, {connectionStateRecovery: {}});//"connectionRecovery" lida com breves desconexões
+GameSocket(io) //envia o "io", objeto principal do socket.io, como parametro pro GameSocket.io
+
 //* Middlewares
 app.use(cors()); //!
 app.use(express.json({ limit: '10mb' }));
@@ -24,7 +29,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 //* Servir arquivos estáticos (CSS, imagens)
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'views')));
 
 //* Rotas da API
 app.use('/api', jogadorRoutes);
@@ -47,13 +52,10 @@ app.get('/jogo', (req, res) => {
     res.render('jogo', { nome });
 });
 
-//* Configuração do socket.io
-const server = createServer(app) //cria o server "cru" a partir do express
-const io = new Server(server, {connectionStateRecovery: {}});//"connectionRecovery" lida com breves desconexões
-GameSocket(io) //envia o "io", objeto principal do socket.io, como parametro pro GameSocket.io
+
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(` Servidor rodando na porta ${PORT}`);
     console.log(` Acesse: http://localhost:${PORT}`);
 });

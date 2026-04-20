@@ -1,24 +1,25 @@
 const GameController = require('../controllers/GameController')
-const RoomManager = require('../managers/RoomManager')
+const SalaManager = require('../managers/SalaManager')
 
 //* Aqui é onde a lógica do jogo acontece
 module.exports = (io) => {
     io.on('connection', (socket) => {
         console.log(socket.id + ' conectado');
-        // Lógica de entrar na sala
-        socket.on("JoinRoom", (code) => {
-            //GameController.JoinRoom(code)
-            console.log("join room: " + code)
-        });
 
         // Lógica de criar sala
-        socket.on("CreateRoom", () => {
-            //GameController.CreateRoom()
-            console.log("room code: " + RoomManager.GetRandomCode())
+        socket.on("CriarSala", (jogador) => {
+            console.log(jogador)
+            SalaManager.CriarSala(socket, jogador)
         });
 
-        socket.on('disconnect', () => {
-            console.log(socket.id + ' desconectado');
+        // Lógica de entrar na sala
+        socket.on("EntrarSala", (jogador, codigo) => {
+            SalaManager.EntrarSala(socket, jogador, codigo)
+        });
+
+        // Lógica de sair da sala
+        socket.on('SairSala', (codigo) => {
+            SalaManager.SairSala(socket, codigo)
         });
     });
 };
