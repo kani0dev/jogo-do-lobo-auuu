@@ -1,5 +1,7 @@
 const Jogador = require('../models/Jogador');
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const jwt_secret = `${process.env.JWTSECRET}`
 
 // Criar jogador (cadastro único)
 exports.criarJogador = async (req, res) => {
@@ -46,7 +48,7 @@ exports.criarJogador = async (req, res) => {
         });
     } catch (error) {
         console.log(error)
-        res.status(500).json({ error: 'Erro ao cadastrar' });
+        res.status(500).json({ error });
     }
 };
 
@@ -85,7 +87,7 @@ exports.listarJogadores = async (req, res) => {
         });
     } catch (error) {
         console.log(error)
-        res.status(500).json({ error: 'Erro ao listar' });
+        res.status(500).json({ error});
     }
 };
 
@@ -104,14 +106,37 @@ exports.deletarJogador = async (req, res) => {
 // Rota de login (a ser implementada)
 exports.login = async (req, res) => {
     try {
-        const { nome } = req.body;
-        let jogador = await Jogador.findOne({ nome: nome.trim() });
+        const { nome, senha } = req.body;
+
+        const jogador = await Jogador.findOne({ nome: nome.trim() });
         
         if (!jogador) {
-            jogador = await Jogador.create({ nome: nome.trim() });
+            return res.status(401).json({ error: "Credenciais inválidas" });
         }
-        res.json(jogador);
+
+        const senhaCorreta = await bcrypt.compare(senha, jogador.senha);
+
+        if (senhaCorreta) {
+            const token = jwt.sign(
+                { id: jogador._id, nome: jogador.nome }, 
+                process.env.JWTSECRET, 
+                { expiresIn: '1h' }
+            );
+
+            return res.json({ 
+                success: true,
+                token,
+                jogador: { id: jogador._id, nome: jogador.nome } 
+            });
+        }
+
+        return res.status(401).json({ error: "Credenciais inválidas" });
+
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao processar login' });
+        console.error(error);
+        res.status(500).json({ 
+            error: "Erro interno no servidor",
+            message : error
+         });
     }
 };

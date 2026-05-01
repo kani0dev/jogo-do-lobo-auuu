@@ -3,7 +3,12 @@ require('dotenv').config();
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI);
+        // await mongose.connect(mongodb://locahost:27017/jogo_lobitos)
+        await mongoose.connect(process.env.MONGODB_URI,{
+            user: process.env.DB_USER,
+            pass: process.env.DB_PASS,
+            authSource: 'admin'
+        });
         console.log(' MongoDB conectado com sucesso!');
         console.log(` Banco: ${process.env.MONGODB_URI}`);
     } catch (error) {

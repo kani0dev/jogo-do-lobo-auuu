@@ -15,9 +15,11 @@ const jogadorSchema = new mongoose.Schema({
         minlength: [3, 'Nome deve ter pelo menos 3 caracteres'],
         maxlength: [20, 'Nome deve ter no máximo 20 caracteres']
     },
-    senha: {
-        type: String,
-        required: [true, 'Senha é obrigatório']
+    senha:{
+        type:String,
+        required:[true, 'Senha é obrigatoria'],
+        trim: true,
+        minlength: [8, 'senha deve ter no minimo 8 caracteres']
     },
     foto: {
         type: String,

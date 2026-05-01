@@ -10,6 +10,7 @@ const { join } = require('node:path'); //importa o join, necessário pq o expres
 const GameSocket = require('./src/sockets/GameSocket.js') //importa o "GameSocket", onde a lógica do jogo existe
 const path = require('path');
 require('dotenv').config();
+const endpointAuth = require("./src/managers/JWTAuth")
 
 const app = express();
 connectDB();// Conecta ao banco de dados
@@ -39,10 +40,14 @@ app.get('/', (req, res) => {
     res.render('login');
 });
 
-//* Rota para processar o login
-app.post('/entrar', (req, res) => {
-    const { nome } = req.body;
+
+// Rota para processar o login
+app.post('/entrar',endpointAuth, (req, res) => { 
+    let { nome } = req.body;
+
     console.log("Nome recebido:", nome);
+    console.log(token);
+    
     res.redirect(`/jogo?nome=${encodeURIComponent(nome)}`);
 });
 
