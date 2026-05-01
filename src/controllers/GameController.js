@@ -1,7 +1,6 @@
-const RoomManager = require('../managers/SalaManager.js')
+const SalaManager = require("../managers/SalaManager")
 
-exports.handleCreateRoom = (socket) => {
-    const newRoom = RoomManager.CreateRoom(socket.id)
-    socket.join(newRoom.id)
+exports.handleAttack = (target) => {
+    SalaManager.Salas[codigo].jogadores[target].estado = "atacado" //? Sla algo assim
 }
 
