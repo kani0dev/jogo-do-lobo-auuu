@@ -76,6 +76,7 @@
              Jogador: <strong><%= nome %></strong>
         </div>
         <a href="/" class="sair">🚪 Sair</a>
+        <button id="criar" class="sair">TESTE</button>
     </div>
 
     <div class="game-area">
@@ -85,5 +86,28 @@
         
         </div>
     </div>
+    <script src="../socket.io/socket.io.js"></script>
+    <script src="js/main.js"></script>
 </body>
+<script>
+    const token = localStorage.getItem('token_lobitos');
+
+    if (!token) {
+        // Se não tem token, nem deixa ver a página
+        alert("Sessão expirada. Faça login novamente.");
+        window.location.href = '/login'; 
+    } else {
+        // Se tem token, você pode buscar os dados do jogador via fetch
+        fetch('/api/dados-do-jogo', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(res => {
+            if (res.status === 401) window.location.href = '/';
+            return res.json();
+        })
+        .then(dados => {
+            console.log("Jogo carregado para:", dados.nome);
+        });
+    }
+</script>
 </html>
