@@ -103,7 +103,7 @@ let resultado = {
     vencedor: null ,
 }
 
-// o jogo só acaba seNÃO houver mais ovelhas.
+// o jogo só acaba se NÃO houver mais ovelhas.
 
 if (ovelhasVivas === 0){
     resultado.JogoAcaba = true;
