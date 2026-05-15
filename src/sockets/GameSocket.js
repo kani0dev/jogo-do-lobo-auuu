@@ -1,5 +1,5 @@
-const GameController = require('../controllers/GameController')
-const SalaManager = require('../managers/SalaManager')
+const JogoController = require('../controllers/JogoController')
+const SalaManager = require('../services/SalaManager')
 
 //* Aqui é onde a lógica do jogo acontece
 module.exports = (io) => {
@@ -13,7 +13,7 @@ module.exports = (io) => {
         });
 
         // Lógica de entrar na sala
-        socket.on("EntrarSala", (jogador, codigo) => {
+        socket.on("EntrarSala", (codigo, jogador) => {
             SalaManager.EntrarSala(socket, jogador, codigo)
         });
 
@@ -21,5 +21,9 @@ module.exports = (io) => {
         socket.on('SairSala', (codigo) => {
             SalaManager.SairSala(socket, codigo)
         });
+
+        socket.on('Pronto', (codigo)=>{
+            JogoController.AtualizarSala(socket, codigo)
+        })
     });
 };

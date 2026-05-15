@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jogadorController = require('../controllers/JogadorController');
-const endpointAuth = require("../managers/JWTAuth")
+const endpointAuth = require("../services/JWTAuth")
 // Criar jogador (quando começar o jogo)
 
 router.post('/jogador', jogadorController.criarJogador);

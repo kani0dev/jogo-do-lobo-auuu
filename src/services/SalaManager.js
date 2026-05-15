@@ -1,6 +1,8 @@
+const ConstFuncoes = require("./ConstFuncoes.js")
+
 var Salas = {}
 
-exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes = [{nome:"Lobisomen", quantidade: 1},{nome:"Aldeão", quantidade: 9}]}) => {
+exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes :[{nome:"Lobo", quantidade: 1},{nome:"Ovelha", quantidade: 9}]}) => {
     try{
         // Muitissimas validações, lol
         const totalJogadores = config.funcoes.reduce((total, funcao) => total + funcao.quantidade, 0)
@@ -20,6 +22,11 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes 
             console.log(socket.id + " tentou criar uma sala sem funções")
             return { erro: "A sala deve ter pelo menos uma função"}
         }
+        for(f in config.funcoes){ //Checa se a funcao inserida existe
+            if(!ConstFuncoes.Funcoes[f.nome]){
+                return { erro: "A funcao "+f.nome+", não é uma função reconhecida pelo jogo"}
+            }
+        }
         if(config.funcoes.some(funcao => funcao.quantidade < 1)){ // Valida a quantidade de jogadores por função
             console.log(socket.id + " tentou criar uma sala com uma função com quantidade menor que 1")
             return { erro: "Cada função deve ter pelo menos 1 jogador"}
@@ -29,9 +36,9 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes 
         Salas[codigo] = {
             codigo : codigo, 
             privacidade: config.privacidade,
-            sala_estado: "esperando",
+            sala_estado: "ESPERANDO",
             quantidade_jogadores: totalJogadores,
-            anfitrião: socket.id,
+            anfitriao: socket.id,
             jogadores: [],
             funcoes: config.funcoes,
             votos: []
@@ -68,7 +75,8 @@ exports.EntrarSala = (socket, jogador, codigo) => {
             socket_id: socket.id,
             nome: jogador.nome,
             funcao: null,
-            estado: "não pronto"
+            estado: "NÃO PRONTO",
+            efeitos: []
         }
 
         socket.join(codigo)

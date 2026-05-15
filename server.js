@@ -10,7 +10,7 @@ const { join } = require('node:path'); //importa o join, necessário pq o expres
 const GameSocket = require('./src/sockets/GameSocket.js') //importa o "GameSocket", onde a lógica do jogo existe
 const path = require('path');
 require('dotenv').config();
-const endpointAuth = require("./src/managers/JWTAuth")
+const endpointAuth = require("./src/services/JWTAuth")
 
 const app = express();
 connectDB();// Conecta ao banco de dados
