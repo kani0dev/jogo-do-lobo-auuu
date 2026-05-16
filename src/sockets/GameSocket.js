@@ -1,15 +1,17 @@
-const JogoController = require('../controllers/JogoController')
+const JogoService = require('../services/JogoService')
 const SalaManager = require('../services/SalaManager')
 
-//* Aqui é onde a lógica do jogo acontece
+//* Aqui é onde as requisições do socket são recebidas e passadas pro controller
+//TODO: Mandar as requisições pro controller e não direto daqui pros services
 module.exports = (io) => {
     io.on('connection', (socket) => {
         console.log(socket.id + ' conectado');
 
         // Lógica de criar sala
         socket.on("CriarSala", (jogador) => {
-            console.log(jogador)
-            SalaManager.CriarSala(socket, jogador)
+            
+            const teste = SalaManager.CriarSala(socket, jogador)
+            console.log(teste)
         });
 
         // Lógica de entrar na sala
@@ -23,7 +25,7 @@ module.exports = (io) => {
         });
 
         socket.on('Pronto', (codigo)=>{
-            JogoController.AtualizarSala(socket, codigo)
+            JogoService.AtualizarSala(socket, codigo)
         })
     });
 };

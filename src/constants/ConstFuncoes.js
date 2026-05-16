@@ -1,4 +1,4 @@
-const SalaManager = require("./SalaManager.js")
+const SalaManager = require("../services/SalaManager.js")
 
 exports.Funcoes = {
     Lobo:{
