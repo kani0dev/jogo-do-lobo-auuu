@@ -1,4 +1,6 @@
-const SalaManager = require("../services/SalaManager")
+const SalaManager = require("./SalaManager")
+const ConstFuncoes = require("../constants/ConstFuncoes")
+const JogoStateMachine = require("./JogoStateMachine")
 
 // distribuição de papeis no inicio do jogo
 exports.DistribuirPapeis = (codigo) => {
@@ -21,11 +23,55 @@ exports.DistribuirPapeis = (codigo) => {
             [funcoesLista[i], funcoesLista[j]] = [funcoesLista[j], funcoesLista[i]];
         }   
         
-        Sala.jogadores.forEach((jogador, index) => { // Atribui as funcoes pra cada jogador
+        Object.values(Sala.jogadores).forEach((jogador, index) => { // Atribui as funcoes pra cada jogador
             jogador.funcao = funcoesLista[index]
         })
 
         return {ok: true, res: Sala}
+    }catch(erro){
+        return { erro }
+    }
+}
+
+exports.PerformarAção = (socket, codigo, JogadorAlvo = null) => {
+    try{
+        //Validações da sala
+        const Sala = SalaManager.Salas[codigo]
+        if(!Sala){
+            return {erro: "Sala "+codigo+", não existe"}
+        }
+        if(Sala.estado.toUpperCase() != "NOITE"){
+            return { erro: "Jogador " + socket.id + " tentou performar uma ação sem ser a noite"}
+        }
+
+        //Validações do jogador
+        const Jogador = Sala.jogadores[socket.id]
+        if(!Jogador){
+            return { erro: "Jogador " + socket.id + " não está na sala " + codigo}
+        }
+        if(Jogador.estado.toUpperCase() == "PRONTO"){
+            return { erro: "Jogador " + socket.id + " já performou a sua ação "}
+        }
+
+        //Valida se o jogador tem uma função e um alvo
+        const Acao = ConstFuncoes[Jogador.funcao].acao
+        if(Acao && JogadorAlvo){
+            const response = Acao(Sala, socket.id, JogadorAlvo.socket_id)
+            if(response.erro){
+                return response
+            }
+        }
+        Sala.jogadores[socket.id].estado = "PRONTO"
+
+        for(const j in Object.values(Sala.jogadores)){ //Checa se todos os jogadores estão prontos, se pelo menos um não tiver, ele retorna 
+            if(j.estado.toUpperCase() != "PRONTO"){
+                return {ok: true}
+            }
+        }
+        
+        JogoStateMachine.MudaEstadoDaSala(codigo)
+        return {ok: true}
+        
     }catch(erro){
         return { erro }
     }
@@ -86,29 +132,27 @@ exports.ProcessarVotos = (codigo) => {
             contagemVotos[voto.para]++
         })
 
-        let Expulsar = []
+        let expulsar = []
         let maxVotos = -1
         for(const jogador in contagemVotos) {
             if(contagemVotos[jogador] > maxVotos) {
                 maxVotos = contagemVotos[jogador];
-                Expulsar = [jogador];
+                expulsar = [jogador];
             }else{
                 if(contagemVotos[jogador] == maxVotos){
-                    Expulsar.push[jogador];
+                    expulsar.push[jogador];
                 }
             }
         }
-        if(Expulsar.length > 1){
+        if(expulsar.length > 1){
             return {ok: true, res: {empate: true}}
         }
-        Sala.jogadores[Expulsar[0]].estado = "MORTO"
-        return {ok: true, res: Expulsar[0]}
+        return {ok: true, res: expulsar[0]}
     }catch(erro){
         return { erro }
     }
 }
 
-exports.VerificaFuncoes
 
 //     // conta quantas ovelhas e lobos ainda estão vivas
 // const ovelhasVivas = Object.values(papeis).filter(papel => papel === "ovelha").length>0

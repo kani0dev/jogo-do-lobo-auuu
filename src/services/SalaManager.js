@@ -1,6 +1,7 @@
 const ConstFuncoes = require("../constants/ConstFuncoes.js")
+const JogoStateMachine = require("./JogoStateMachine.js")
 
-var Salas = {}
+exports.Salas = {}
 
 exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes :[{nome:"Lobo", quantidade: 1},{nome:"Ovelha", quantidade: 9}]}) => {
     try{
@@ -33,7 +34,7 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes 
         }
         
         const codigo = GerarCodigoAleatorio()
-        Salas[codigo] = {
+        exports.Salas[codigo] = {
             codigo : codigo, 
             privacidade: config.privacidade,
             sala_estado: "ESPERANDO",
@@ -45,7 +46,7 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes 
         }
         exports.EntrarSala(socket, jogador, codigo)
 
-        return {ok: true, res: Salas[codigo]}
+        return {ok: true, res: exports.Salas[codigo]}
     }catch(erro){
         console.log("Erro ao criar a sala: " + erro)
         return { erro }
@@ -59,7 +60,7 @@ exports.EntrarSala = (socket, jogador, codigo) => {
             return { erro: "Você já está em uma sala"}
         }
 
-        const Sala = Salas[codigo]
+        const Sala = exports.Salas[codigo]
         if(!Sala){
             console.log(socket.id + " tentou entrar em uma sala inexistente")
             return { erro: "Sala " + codigo + " não encontrada"}
@@ -94,7 +95,7 @@ exports.EntrarSala = (socket, jogador, codigo) => {
 
 exports.SairSala = (socket, codigo) => {
     try{
-        const Sala = Salas[codigo]
+        const Sala = exports.Salas[codigo]
         if(!Sala){
             console.log(socket.id + " tentou sair de uma sala inexistente")
             return { erro: "Sala " + codigo + " não encontrada"}
@@ -121,7 +122,7 @@ exports.SairSala = (socket, codigo) => {
 
 exports.MudarConfigSala = (socket, codigo, config = {}) => {
     try{
-        const Sala = Salas[codigo]
+        const Sala = exports.Salas[codigo]
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
@@ -171,7 +172,7 @@ exports.MudarConfigSala = (socket, codigo, config = {}) => {
 
 exports.MudarProntidao = (socket, codigo)=>{
     try{
-        const Sala = Salas[codigo]
+        const Sala = exports.Salas[codigo]
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
@@ -195,7 +196,7 @@ exports.MudarProntidao = (socket, codigo)=>{
 
 exports.ComecarJogo = (socket, codigo)=>{
     try{
-        const Sala = Salas[codigo]
+        const Sala = exports.Salas[codigo]
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
@@ -218,8 +219,16 @@ exports.ComecarJogo = (socket, codigo)=>{
                 return {erro: "Todos os jogadores devem estar prontos pra partida começar"}
             }
         }
-        Sala.estado = "NOITE" //TODO: chamar maquina de estados
-        return { ok: true, res: Sala }
+
+        const IniciaJogo = JogoStateMachine.IniciaJogo(codigo)
+
+        if(IniciaJogo.ok){
+            return { ok: true, res: Sala }
+        }else{
+            return IniciaJogo.erro 
+        }
+
+        
     }catch(erro){
         return { erro }
     }

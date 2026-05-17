@@ -5,21 +5,23 @@ exports.Funcoes = {
         nome: "Lobo",
         descricao: "O lobo em pele de cordeiro, seu objetivo é se alimentar do rebanho sem que ninguem descubra sua verdadeira natureza",
         equipe: "Lobos",
-        acao: (CodigoSala, JogadorOrigem, JogadorAlvo)=>{
-            const Sala = SalaManager.Salas[CodigoSala]
-            const Alvo = Sala.jogadores[JogadorAlvo]
-            if(!Alvo){
-                return {erro: "Jogador "+JogadorAlvo+" não existe na sala: "+ CodigoSala}
+        acao: (Sala, JogadorOrigem, JogadorAlvo)=>{
+            try{
+                const Alvo = Sala.jogadores[JogadorAlvo]
+                if(!Alvo){
+                    return {erro: "Jogador "+JogadorAlvo+" não existe na sala: "+ Sala.codigo}
+                }
+                if(Alvo.estado.toUpperCase() == "MORTO"){
+                    return {erro: "Jogador "+JogadorAlvo+" ja esta morto"}
+                }
+                if(Funcoes[Alvo.funcao].equipe.toUpperCase() == "LOBOS"){
+                    return {erro: "Lobo não pode atacar alguem da propria equipe"}
+                }
+                Sala.jogadores[JogadorAlvo].efeitos.push("MATAR") //Adicionar "MATAR" na lista de efeitos do jogador
+                return {ok: true}
+            }catch(erro){
+                return { erro }
             }
-            if(Alvo.estado.toUpperCase() == "MORTO"){
-                return {erro: "Jogador "+JogadorAlvo+" ja esta morto"}
-            }
-            if(Funcoes[Alvo.funcao].equipe.toUpperCase() == "LOBOS"){
-                return {erro: "Lobo não pode atacar alguem da propria equipe"}
-            }
-            Sala.jogadores[JogadorAlvo].efeitos.push("MATAR") //Adicionar "MATAR" na lista de efeitos do jogador
-            Sala.jogadores[JogadorOrigem].estado = "PRONTO" //Finaliza o 
-            return {ok: true}
         }
     },
     Ovelha:{
