@@ -109,15 +109,14 @@ exports.SairSala = (socket, jogador, codigo) => {
             return { erro: "Sala " + codigo + " não encontrada"}
         }
 
-        const jogadorNaoExiste = !Sala.jogadores[jogador.id]
-        if(jogadorNaoExiste){
-            console.log(jogador.nome + " já não está na sala: " + code)
-            return { erro: jogador.nome + " já não está na sala " + codigo}
+        const jogadorNaSala = Sala.jogadores[jogador.id]
+        if(!jogadorNaSala){
+            return { erro: jogadorNaSala.nome + " já não está na sala " + codigo}
         }
-        delete Sala.jogadores[jogador.id]
-        socket.leave(codigo)
+        delete Sala.jogadores[jogadorNaSala.id]
+        socket.leave(codigo+"_GERAL")
 
-        return { ok: true, dados:{message: jogador.nome + " saiu da sala "+codigo+" com sucesso"} }
+        return { ok: true, dados:{jogador ,message: jogador.nome + " saiu da sala "+codigo+" com sucesso"} }
     
     }catch(erro){
         console.log("Erro ao sair da sala: " + error)
