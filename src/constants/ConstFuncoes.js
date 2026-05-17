@@ -7,17 +7,17 @@ exports.Funcoes = {
         equipe: "Lobos",
         acao: (Sala, JogadorOrigem, JogadorAlvo)=>{
             try{
-                const Alvo = Sala.jogadores[JogadorAlvo]
+                const Alvo = Sala.jogadores[JogadorAlvo.id]
                 if(!Alvo){
-                    return {erro: "Jogador "+JogadorAlvo+" não existe na sala: "+ Sala.codigo}
+                    return {erro: "Jogador "+JogadorAlvo.nome+" não existe na sala: "+ Sala.codigo}
                 }
                 if(Alvo.estado.toUpperCase() == "MORTO"){
-                    return {erro: "Jogador "+JogadorAlvo+" ja esta morto"}
+                    return {erro: "Jogador "+JogadorAlvo.nome+" ja esta morto"}
                 }
                 if(Funcoes[Alvo.funcao].equipe.toUpperCase() == "LOBOS"){
                     return {erro: "Lobo não pode atacar alguem da propria equipe"}
                 }
-                Sala.jogadores[JogadorAlvo].efeitos.push("MATAR") //Adicionar "MATAR" na lista de efeitos do jogador
+                Sala.jogadores[JogadorAlvo.id].efeitos.push("MATAR") //Adicionar "MATAR" na lista de efeitos do jogador
                 return {ok: true}
             }catch(erro){
                 return { erro }

@@ -3,6 +3,8 @@ const JogoStateMachine = require("./JogoStateMachine.js")
 
 exports.Salas = {}
 
+//TODO: Expulsar/Banir da sala
+
 exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes :[{nome:"Lobo", quantidade: 1},{nome:"Ovelha", quantidade: 9}]}) => {
     try{
         // Muitissimas validações, lol
@@ -12,15 +14,15 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes 
             return { erro: "Você já está em uma sala"}
         }
         if(totalJogadores < 2 || totalJogadores > 20){// Valida a quantidade de jogadores
-            console.log(socket.id + " tentou criar uma sala com um número de jogadores inválido: " + totalJogadores)
+            console.log(jogador.nome + " tentou criar uma sala com um número de jogadores inválido: " + totalJogadores)
             return { erro: "Número de jogadores deve ser entre 2 e 20"}
         }
         if(!["publico", "privado"].includes(config.privacidade)){// Valida a privacidade
-            console.log(socket.id + " tentou criar uma sala com uma privacidade inválida: " + config.privacidade)
+            console.log(jogador.nome + " tentou criar uma sala com uma privacidade inválida: " + config.privacidade)
             return { erro: "Privacidade deve ser 'publico' ou 'privado'"}
         }
         if(config.funcoes.length == 0){ // Valida a quantidade de funções
-            console.log(socket.id + " tentou criar uma sala sem funções")
+            console.log(jogador.nome + " tentou criar uma sala sem funções")
             return { erro: "A sala deve ter pelo menos uma função"}
         }
         for(const f of config.funcoes){ //Checa se a funcao inserida existe
@@ -29,29 +31,35 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes 
             }
         }
         if(config.funcoes.some(funcao => funcao.quantidade < 1)){ // Valida a quantidade de jogadores por função
-            console.log(socket.id + " tentou criar uma sala com uma função com quantidade menor que 1")
+            console.log(jogador.nome + " tentou criar uma sala com uma função com quantidade menor que 1")
             return { erro: "Cada função deve ter pelo menos 1 jogador"}
         }
         
         const codigo = GerarCodigoAleatorio()
-        exports.Salas[codigo] = {
+        const Sala = exports.Salas[codigo] = {
             codigo : codigo, 
             privacidade: config.privacidade,
             sala_estado: "ESPERANDO",
             quantidade_jogadores: totalJogadores,
-            anfitriao: socket.id,
+            anfitriao: jogador.id,
             jogadores: {},
+            //TODO: Seria interessante ter uma função pra espectar a partida, 
+            //TODO: fazendo com q ainda que a sala esteja cheia, voce possa entrar como espectador
+            //espectadores:{},  
             funcoes: config.funcoes,
             votos: []
         }
         exports.EntrarSala(socket, jogador, codigo)
 
-        return {ok: true, res: exports.Salas[codigo]}
+        return {ok: true, dados:{ Sala, mensagem: "Sala com o codigo "+codigo+" criada com sucesso"}}
     }catch(erro){
         console.log("Erro ao criar a sala: " + erro)
         return { erro }
     }
 }
+
+//TODO: refatorar o objeto do jogador, colocar uma varivel vivo talvez
+//TODO: em vez de usar estado pra saber se ja performou a ação e esta vivo ao mesmo tempo
 
 exports.EntrarSala = (socket, jogador, codigo) => {
     try{
@@ -62,30 +70,30 @@ exports.EntrarSala = (socket, jogador, codigo) => {
 
         const Sala = exports.Salas[codigo]
         if(!Sala){
-            console.log(socket.id + " tentou entrar em uma sala inexistente")
+            console.log(jogador.nome + " tentou entrar em uma sala inexistente")
             return { erro: "Sala " + codigo + " não encontrada"}
         }
 
-        const jogadorExiste = Sala.jogadores[socket.id]
+        const jogadorExiste = Sala.jogadores[jogador.id]
         if(jogadorExiste){
-            console.log(socket.id + " ja existe na sala: " + code)
-            return { erro: "Jogador " + socket.id + " já existe na sala " + codigo}
+            console.log(jogador.nome + " ja existe na sala: " + code)
+            return { erro: "Jogador " + jogador.nome + " já existe na sala " + codigo}
         }
 
         if(Object.keys(Sala.jogadores).length >= Sala.quantidade_jogadores){
             return { erro: "A sala "+codigo+" está cheia" }
         }
 
-        Sala.jogadores[socket.id] = {
+        Sala.jogadores[jogador.id] = {
+            id: jogador.id,
             socket_id: socket.id,
             nome: jogador.nome,
             funcao: null,
-            estado: "NÃO PRONTO",
+            estado: "NAO PRONTO",
             efeitos: []
         }
-        socket.join(codigo)
-
-        return { ok: true, res: Sala }
+        socket.join(codigo + "_GERAL")
+        return { ok: true, dados: { Sala, mensagem: jogador.nome + " entrou na sala "+codigo+" com sucesso" } }
 
     }catch(erro){
         console.log("Erro ao entrar na sala: " + erro)
@@ -93,26 +101,24 @@ exports.EntrarSala = (socket, jogador, codigo) => {
     }
 }
 
-exports.SairSala = (socket, codigo) => {
+exports.SairSala = (socket, jogador, codigo) => {
     try{
         const Sala = exports.Salas[codigo]
         if(!Sala){
-            console.log(socket.id + " tentou sair de uma sala inexistente")
+            console.log(jogador.nome + " tentou sair de uma sala inexistente")
             return { erro: "Sala " + codigo + " não encontrada"}
         }
 
-        const jogadorNaoExiste = !Sala.jogadores[socket.id]
+        const jogadorNaoExiste = !Sala.jogadores[jogador.id]
         if(jogadorNaoExiste){
-            console.log(socket.id + " já não está na sala: " + code)
-            return { erro: "Jogador " + socket.id + " já não está na sala " + codigo}
+            console.log(jogador.nome + " já não está na sala: " + code)
+            return { erro: jogador.nome + " já não está na sala " + codigo}
         }
-
-        delete Sala.jogadores[socket.id]
+        delete Sala.jogadores[jogador.id]
         socket.leave(codigo)
 
-        return { ok: true }
+        return { ok: true, dados:{message: jogador.nome + " saiu da sala "+codigo+" com sucesso"} }
     
-        Sala.estado = "NOITE" //TODO: chamar maquina de estados
     }catch(erro){
         console.log("Erro ao sair da sala: " + error)
         return { erro }
@@ -120,17 +126,36 @@ exports.SairSala = (socket, codigo) => {
 
 }
 
-exports.MudarConfigSala = (socket, codigo, config = {}) => {
+exports.ReconectarSala = (socket, jogador, codigo) => {
     try{
         const Sala = exports.Salas[codigo]
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
-        const Jogador = Sala.jogadores[socket.id]
+        const Jogador = Sala.jogadores[jogador.id]
         if(!Jogador){
-            return {erro: "Jogador "+socket.id+" não encontrado na sala "+codigo}
+            return {erro: jogador.nome+" não encontrado na sala "+codigo}
         }
-        if(Sala.anfitriao != socket.id){
+        Jogador.socket_id = socket.id
+        socket.join(codigo + "_GERAL")
+        socket.to(codigo+"_GERAL").emit("Reconectou", Jogador)
+        return {ok: true, dados: {Jogador}}
+    }catch(erro){
+        return { erro }
+    }
+}
+
+exports.MudarConfigSala = (socket, jogador, codigo, config = {}) => {
+    try{
+        const Sala = exports.Salas[codigo]
+        if(!Sala){
+            return {erro: "Sala "+codigo+", não existe"}
+        }
+        const Jogador = Sala.jogadores[jogador.id]
+        if(!Jogador){
+            return {erro: jogador.nome+" não encontrado na sala "+codigo}
+        }
+        if(Sala.anfitriao != jogador.id){
             return {erro: "Apenas o anfitrião pode mudar as configurações da sala"}
         }
         if(Sala.estado.toUpperCase() != "ESPERANDO"){
@@ -145,7 +170,7 @@ exports.MudarConfigSala = (socket, codigo, config = {}) => {
                 case funcoes:
                     const totalJogadores = config[c].reduce((total, funcao) => total + funcao.quantidade, 0)
                     if(totalJogadores < 2 || totalJogadores > 20){// Valida a quantidade de jogadores
-                        console.log(socket.id + " tentou criar uma sala com um número de jogadores inválido: " + totalJogadores)
+                        console.log(jogador.nome + " tentou criar uma sala com um número de jogadores inválido: " + totalJogadores)
                         return { erro: "Número de jogadores deve ser entre 2 e 20"}
                     }
                     for(const f of config[c]){//Checa se a funcao inserida existe
@@ -154,7 +179,7 @@ exports.MudarConfigSala = (socket, codigo, config = {}) => {
                         }
                     }
                     if(config.funcoes.some(funcao => funcao.quantidade < 1)){ // Valida a quantidade de jogadores por função
-                        console.log(socket.id + " tentou criar uma sala com uma função com quantidade menor que 1")
+                        console.log(jogador.nome + " tentou criar uma sala com uma função com quantidade menor que 1")
                         return { erro: "Cada função deve ter pelo menos 1 jogador"}
                     }
                     Sala.funcoes = config[c]
@@ -164,47 +189,47 @@ exports.MudarConfigSala = (socket, codigo, config = {}) => {
                     break;
             }
         }
-        return { ok: true, res: Sala }
+        return { ok: true, dados: { Sala } }
     }catch(erro){
         return { erro }
     }
 }
 
-exports.MudarProntidao = (socket, codigo)=>{
+exports.MudarProntidao = (socket, jogador, codigo)=>{
     try{
         const Sala = exports.Salas[codigo]
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
-        const Jogador = Sala.jogadores[socket.id]
+        const Jogador = Sala.jogadores[jogador.id]
         if(!Jogador){
-            return {erro: "Jogador "+socket.id+" não encontrado na sala "+codigo}
+            return {erro: jogador.nome + " não encontrado na sala "+codigo}
         }
         const JogoComecou = Sala.estado.toUpperCase() != "ESPERANDO" 
         if(JogoComecou){
             return {erro: "O jogo da sala "+codigo+" ja começou"}
         }
 
-        Jogador.estado = (Jogador.estado.toUpperCase() === "PRONTO") ? "NÃO PRONTO" : "PRONTO" // Da um toggle no estado do jogador
+        Jogador.estado = (Jogador.estado.toUpperCase() === "PRONTO") ? "NAO PRONTO" : "PRONTO" // Da um toggle no estado do jogador
 
-        return { ok: true, res: Jogador }
+        return { ok: true, dados: { Jogador } }
     }catch(erro){
         console.log(erro)
         return { erro }
     }
 }
 
-exports.ComecarJogo = (socket, codigo)=>{
+exports.ComecarJogo = (socket, jogador, codigo)=>{
     try{
         const Sala = exports.Salas[codigo]
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
-        const Jogador = Sala.jogadores[socket.id]
+        const Jogador = Sala.jogadores[jogador.id]
         if(!Jogador){
-            return {erro: "Jogador "+socket.id+" não encontrado na sala "+codigo}
+            return {erro: jogador.nome +" não encontrado na sala "+codigo}
         }
-        if(Sala.anfitriao != socket.id){
+        if(Sala.anfitriao != jogador.id){
             return {erro: "Apenas o anfitrião pode começar a partida"}
         }
         if(Sala.estado.toUpperCase() != "ESPERANDO"){
@@ -214,7 +239,7 @@ exports.ComecarJogo = (socket, codigo)=>{
             return { erro: "A quantidade de jogadores não bate com a quantidade de papeis"}
         }
         
-        for(const j in Object.values(Sala.jogadores)){
+        for(const j of Object.values(Sala.jogadores)){
             if(j.estado.toUpperCase() != "PRONTO"){
                 return {erro: "Todos os jogadores devem estar prontos pra partida começar"}
             }
@@ -223,7 +248,7 @@ exports.ComecarJogo = (socket, codigo)=>{
         const IniciaJogo = JogoStateMachine.IniciaJogo(codigo)
 
         if(IniciaJogo.ok){
-            return { ok: true, res: Sala }
+            return { ok: true, dados: {Sala} }
         }else{
             return IniciaJogo.erro 
         }

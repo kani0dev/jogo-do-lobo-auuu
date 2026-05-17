@@ -27,50 +27,50 @@ exports.DistribuirPapeis = (codigo) => {
             jogador.funcao = funcoesLista[index]
         })
 
-        return {ok: true, res: Sala}
+        return {ok: true, dados: { Sala, mensagem: "Papeis da sala "+codigo+" distribuidos com sucesso" }}
     }catch(erro){
         return { erro }
     }
 }
 
-exports.PerformarAção = (socket, codigo, JogadorAlvo = null) => {
+exports.PerformarAção = (socket, jogador, codigo, JogadorAlvo = null) => {
     try{
         //Validações da sala
         const Sala = SalaManager.Salas[codigo]
         if(!Sala){
-            return {erro: "Sala "+codigo+", não existe"}
+            return { erro: "Sala "+codigo+", não existe" }
         }
         if(Sala.estado.toUpperCase() != "NOITE"){
-            return { erro: "Jogador " + socket.id + " tentou performar uma ação sem ser a noite"}
+            return { erro: jogador.nome + " tentou performar uma ação sem ser a noite"}
         }
 
         //Validações do jogador
-        const Jogador = Sala.jogadores[socket.id]
-        if(!Jogador){
-            return { erro: "Jogador " + socket.id + " não está na sala " + codigo}
+        const JogadorOrigem = Sala.jogadores[jogador.id]
+        if(!JogadorOrigem){
+            return { erro: jogador.nome + " não está na sala " + codigo}
         }
-        if(Jogador.estado.toUpperCase() == "PRONTO"){
-            return { erro: "Jogador " + socket.id + " já performou a sua ação "}
+        if(JogadorOrigem.estado.toUpperCase() == "PRONTO"){
+            return { erro: jogador.nome + " já performou a sua ação "}
         }
 
         //Valida se o jogador tem uma função e um alvo
-        const Acao = ConstFuncoes[Jogador.funcao].acao
+        const Acao = ConstFuncoes[JogadorOrigem.funcao].acao
         if(Acao && JogadorAlvo){
-            const response = Acao(Sala, socket.id, JogadorAlvo.socket_id)
+            const response = Acao(Sala, JogadorOrigem.id, JogadorAlvo.id)
             if(response.erro){
                 return response
             }
         }
-        Sala.jogadores[socket.id].estado = "PRONTO"
+        JogadorOrigem.estado = "PRONTO"
 
-        for(const j in Object.values(Sala.jogadores)){ //Checa se todos os jogadores estão prontos, se pelo menos um não tiver, ele retorna 
+        for(const j of Object.values(Sala.jogadores)){ //Checa se todos os jogadores estão prontos, se pelo menos um não tiver, ele retorna 
             if(j.estado.toUpperCase() != "PRONTO"){
-                return {ok: true}
+                return {ok: true, dados: {jogador, mensagem: jogador.nome + " performou ação com sucesso"}}
             }
         }
-        
-        JogoStateMachine.MudaEstadoDaSala(codigo)
-        return {ok: true}
+
+        const resposta = JogoStateMachine.MudaEstadoDaSala(codigo)
+        return resposta
         
     }catch(erro){
         return { erro }
@@ -78,76 +78,55 @@ exports.PerformarAção = (socket, codigo, JogadorAlvo = null) => {
 }
 
 //processa votação do rebanho (quem vai ser expulso (mabel))
-exports.Votar = (socket, codigo, JogadorAlvo) => {
+exports.Votar = (socket, jogador, codigo, JogadorAlvo = null) => {
     try{
         const Sala = SalaManager.Salas[codigo]
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
         //Checa se o jogador existe, se ele esta morto ou se ele ja votou
-        const Eleitor = Sala.jogadores[socket.id]
+        const Eleitor = Sala.jogadores[jogador.id]
         if(!Eleitor){
-            return { erro: "Jogador " + socket.id + " não está na sala " + codigo}
+            return { erro: jogador.nome + " não está na sala " + codigo}
         }
         if(Eleitor.estado.toUpperCase() == "MORTO"){
-            return { erro: "Jogador " + socket.id + " está morto, morto não vota"}
+            return { erro: jogador.nome +  "está morto, morto não vota"}
         }
         for(const v of Sala.votos){
-            if(v.de == socket.id){
+            if(v.de == jogador.id){
                 return { erro: "Jogador " + socket.id + " ja votou"}
             }
         }
-        //Checha se o alvo existe e se ele esta morto
-        const Alvo = Sala.jogadores[JogadorAlvo.socket_id]
-        if(!Alvo){
-            return { erro: "Jogador " + socket.id + " não está na sala " + codigo}
-        }
-        if(Alvo.estado.toUpperCase() == "MORTO"){
-            return { erro: "Jogador Alvo " + JogadorAlvo.socket_id + " está morto, morto não é votado"}
-        }
+        
+        let voto = {}
 
-        const voto = {
-            de: socket.id,
-            para: JogadorAlvo.socket_id
+        const Alvo = Sala.jogadores[JogadorAlvo.id]
+
+        if(Alvo){ // Se tiver alvo, consta o voto
+            if(Alvo.estado.toUpperCase() == "MORTO"){
+                return { erro: "Jogador Alvo " + JogadorAlvo.id + " está morto, morto não é votado"}
+            }
+            voto = {
+                de: jogador.id,
+                para: JogadorAlvo.id
+            }
+        }else{ // Se não tiver, o voto é nulo
+            voto = {
+                de: jogador.id,
+                para: null
+            }
         }
+        
         Sala.votos.push(voto)
-
-        return { ok: true, res: voto }
-    }catch(erro){
-        return { erro }
-    }
-}
-
-exports.ProcessarVotos = (codigo) => {
-    try{
-        let contagemVotos = {}
-        const Sala = SalaManager.Salas[codigo]
-        if(!Sala){
-            return {erro: "Sala "+codigo+", não existe"}
-        }
-        Sala.votos.forEach((voto)=>{
-            if(!contagemVotos[voto.para]){
-                contagemVotos[voto.para] = 0
-            }
-            contagemVotos[voto.para]++
-        })
-
-        let expulsar = []
-        let maxVotos = -1
-        for(const jogador in contagemVotos) {
-            if(contagemVotos[jogador] > maxVotos) {
-                maxVotos = contagemVotos[jogador];
-                expulsar = [jogador];
-            }else{
-                if(contagemVotos[jogador] == maxVotos){
-                    expulsar.push[jogador];
-                }
+        Eleitor.estado = "PRONTO"
+        for(const j of Object.values(Sala.jogadores)){ //Checa se todos os jogadores estão prontos, se pelo menos um não tiver, ele retorna 
+            if(j.estado.toUpperCase() != "PRONTO"){
+                return {ok: true}
             }
         }
-        if(expulsar.length > 1){
-            return {ok: true, res: {empate: true}}
-        }
-        return {ok: true, res: expulsar[0]}
+        const resposta = JogoStateMachine.MudaEstadoDaSala(codigo)
+        return resposta
+
     }catch(erro){
         return { erro }
     }
