@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors'); //! talvez nem precise, o html vai ser entregue pelo prorpio server.js (de acrodo com o gemini)
 const connectDB = require('./src/database/db');//importa a função de conexão do banco de dados
 const jogadorRoutes = require('./src/routes/JogadorRoutes');//importa as rotas do CRUD de jogadores
+const jogoRoutes = require('./src/routes/JogoRoutes');//importa as rotas das salas
 
 //* Importação de funções pro socket.io funcionar
 const { createServer } = require('node:http'); //cria um server "cru" a partir do express, pq o socket só funciona assim
@@ -26,19 +27,23 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 //* Configurar EJS como motor de template
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+// app.set('view engine', 'ejs');
+// app.set('views', path.join(__dirname, 'views'));
 
 //* Servir arquivos estáticos (CSS, imagens)
-app.use(express.static(path.join(__dirname, 'views')));
+// app.use(express.static(path.join(__dirname, 'views')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 //* Rotas da API
 app.use('/api', jogadorRoutes);
+app.use('/api', jogoRoutes);
 
 //* ROTA DA PÁGINA DE LOGIN (é isso que estava faltando!)
 app.get('/', (req, res) => {
-    res.render('login');
+    // res.render('login');
+    res.sendFile("index.html")
 });
+
 
 
 // Rota para processar o login

@@ -118,7 +118,7 @@ exports.login = async (req, res) => {
 
         if (senhaCorreta) {
             const token = jwt.sign(
-                { id: jogador._id, nome: jogador.nome }, 
+                { id: jogador._id, nome: jogador.nome, logado: true }, 
                 process.env.JWTSECRET, 
                 { expiresIn: '1h' }
             );
@@ -140,3 +140,37 @@ exports.login = async (req, res) => {
          });
     }
 };
+
+exports.loginConvidado = async (req, res)=> {
+    try {
+        const { nome } = req.body;
+
+        const TempId = crypto.randomUUID()
+
+        if(nome.trim() != "") {
+            const token = jwt.sign(
+                { id: TempId, nome, logado: false }, 
+                process.env.JWTSECRET, 
+                { expiresIn: '1h' }
+            );
+
+            return res.json({ 
+                success: true,
+                token,
+                jogador: { id: TempId, nome } 
+            });
+        }
+
+        res.status(500).json({ 
+            error: "Erro interno no servidor",
+            message : error
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ 
+            error: "Erro interno no servidor",
+            message : error
+         });
+    }
+}

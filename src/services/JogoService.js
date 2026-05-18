@@ -9,7 +9,7 @@ exports.DistribuirPapeis = (codigo) => {
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
-        const JogoNaoComecou = Sala.estado.toUpperCase() == "ESPERANDO" 
+        const JogoNaoComecou = Sala.sala_estado.toUpperCase() == "ESPERANDO" 
         if(JogoNaoComecou){
             return {erro: "O jogo da sala "+codigo+" ainda não começou"}
         }
@@ -40,7 +40,7 @@ exports.PerformarAção = (socket, jogador, codigo, JogadorAlvo = null) => {
         if(!Sala){
             return { erro: "Sala "+codigo+", não existe" }
         }
-        if(Sala.estado.toUpperCase() != "NOITE"){
+        if(Sala.sala_estado.toUpperCase() != "NOITE"){
             return { erro: jogador.nome + " tentou performar uma ação sem ser a noite"}
         }
 

@@ -13,9 +13,9 @@ exports.MudaEstadoDaSala = (codigo) => {
             return {erro: "Sala "+codigo+", não existe"}
         }
         //Ele verifica o estado atual da sala, faz as coisas que tem que fazer, e logo muda o estado
-        switch(Sala.estado.toUpperCase()){
+        switch(Sala.sala_estado.toUpperCase()){
             case "ESPERANDO":
-                Sala.estado = "NOITE"
+                Sala.sala_estado = "NOITE"
                 JogoService.DistribuirPapeis()
                 break;
             case "NOITE":
@@ -27,17 +27,17 @@ exports.MudaEstadoDaSala = (codigo) => {
                         j.estado = "MORTO"
                     }
                 }
-                Sala.estado = "DISCUSSÃO"
+                Sala.sala_estado = "DISCUSSÃO"
                 break;
             case "DISCUSSÃO": //TODO: Decidir em talvez ser uma discussão estilo among us, e não lobitos
-                Sala.estado = "DIA"
+                Sala.sala_estado = "DIA"
                 break;
             case "DIA":
                 var resposta = ProcessarVotos(codigo)
                 if(resposta.dados.jogador){
                     resposta.dados.jogador.estado = "MORTO"
                 }
-                Sala.estado = "NOITE"
+                Sala.sala_estado = "NOITE"
                 break;
         }
 
@@ -57,7 +57,7 @@ exports.MudaEstadoDaSala = (codigo) => {
             }
             j.estado = "NAO PRONTO"
         }
-        return {ok: true, dados: {Sala, mensagem: "Sala "+codigo+" mudou o estado para: "+Sala.estado}}
+        return {ok: true, dados: {Sala, mensagem: "Sala "+codigo+" mudou o estado para: "+Sala.sala_estado}}
     }catch(erro){
         return { erro }
     }
@@ -121,7 +121,7 @@ const ChecaFimDoJogo = (codigo) => {
             }
         }
         if(jogoAcabou){
-            Sala.estado = "FIM"
+            Sala.sala_estado = "FIM"
         }
         return { jogoAcabou, equipeVencedora }
     }catch(erro){

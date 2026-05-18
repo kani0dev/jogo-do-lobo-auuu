@@ -5,6 +5,17 @@ exports.Salas = {}
 
 //TODO: Expulsar/Banir da sala
 
+exports.SalasPublicas = (req, res) => {
+    const todasAsSalas = Object.values(Salas);
+    const salasPublicas = todasAsSalas.filter(sala => 
+        sala.privacidade === 'publica' && sala.sala_estado === 'ESPERANDO'
+    );
+    return res.status(200).json({
+        sucesso: true,
+        salas: salasPublicas
+    });
+}
+
 exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes :[{nome:"Lobo", quantidade: 1},{nome:"Ovelha", quantidade: 9}]}) => {
     try{
         // Muitissimas validações, lol
@@ -157,7 +168,7 @@ exports.MudarConfigSala = (socket, jogador, codigo, config = {}) => {
         if(Sala.anfitriao != jogador.id){
             return {erro: "Apenas o anfitrião pode mudar as configurações da sala"}
         }
-        if(Sala.estado.toUpperCase() != "ESPERANDO"){
+        if(Sala.sala_estado.toUpperCase() != "ESPERANDO"){
             return {erro: "Partida "+codigo+" já começou"}
         }
         
@@ -204,7 +215,7 @@ exports.MudarProntidao = (socket, jogador, codigo)=>{
         if(!Jogador){
             return {erro: jogador.nome + " não encontrado na sala "+codigo}
         }
-        const JogoComecou = Sala.estado.toUpperCase() != "ESPERANDO" 
+        const JogoComecou = Sala.sala_estado.toUpperCase() != "ESPERANDO" 
         if(JogoComecou){
             return {erro: "O jogo da sala "+codigo+" ja começou"}
         }
@@ -231,7 +242,7 @@ exports.ComecarJogo = (socket, jogador, codigo)=>{
         if(Sala.anfitriao != jogador.id){
             return {erro: "Apenas o anfitrião pode começar a partida"}
         }
-        if(Sala.estado.toUpperCase() != "ESPERANDO"){
+        if(Sala.sala_estado.toUpperCase() != "ESPERANDO"){
             return {erro: "Partida "+codigo+" já começou"}
         }
         if(Object.keys(Sala.jogadores).length != Sala.quantidade_jogadores){
