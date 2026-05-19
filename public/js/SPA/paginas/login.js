@@ -1,4 +1,4 @@
-// js/paginas/login.js
+import { socket } from '../renderPage.js';
 
 export function TelaLogin() {
     return `
@@ -9,12 +9,18 @@ export function TelaLogin() {
             <button id="btn-logar">Entrar no Jogo</button>
             <input type="text" id="nome-convidado" placeholder="Digite seu nome de usuário"/>
             <button id="btn-convidado">Entrar como convidad0</button>
+            <button id="btn">Entrar como convidad0</button>
         </div>
     `;
 }
 
 export function iniciarTelaLogin() {
     const btnLogar = document.getElementById('btn-logar');
+    const btn = document.getElementById('btn');
+    btn.addEventListener("click", () => {
+        socket.emit("teste")
+    })
+    
     
     if(btnLogar){
         btnLogar.addEventListener('click', async () => {
@@ -41,11 +47,15 @@ export function iniciarTelaLogin() {
 
                 const data = await response.json();
 
+
                 if (response.ok && data.token) {
                     // SALVA NO LOCALSTORAGE DO NAVEGADOR
+
                     localStorage.setItem('token_lobitos', data.token);
-                    
-                    // Redireciona para a rota das salas
+                    socket.auth = {
+                        token: data.token // Passa o token aqui dentro do objeto auth
+                    };
+                    socket.connect();
                     window.location.hash = '#salas';
                 } else {
                     alert(data.error || 'Falha no login');
@@ -79,7 +89,10 @@ export function iniciarTelaLogin() {
 
                 if (response.ok && data.token) {
                     localStorage.setItem('token_lobitos', data.token);
-                    
+                    socket.auth = {
+                        token: data.token // Passa o token aqui dentro do objeto auth
+                    };
+                    socket.connect();
                     window.location.hash = '#salas';
                 } else {
                     alert(data.error || 'Falha no login');

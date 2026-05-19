@@ -5,18 +5,7 @@ exports.Salas = {}
 
 //TODO: Expulsar/Banir da sala
 
-exports.SalasPublicas = (req, res) => {
-    const todasAsSalas = Object.values(Salas);
-    const salasPublicas = todasAsSalas.filter(sala => 
-        sala.privacidade === 'publica' && sala.sala_estado === 'ESPERANDO'
-    );
-    return res.status(200).json({
-        sucesso: true,
-        salas: salasPublicas
-    });
-}
-
-exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes :[{nome:"Lobo", quantidade: 1},{nome:"Ovelha", quantidade: 9}]}) => {
+exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1},{nome:"Ovelha", quantidade: 9}]}) => {
     try{
         // Muitissimas validações, lol
         const totalJogadores = config.funcoes.reduce((total, funcao) => total + funcao.quantidade, 0)
@@ -28,7 +17,7 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes 
             console.log(jogador.nome + " tentou criar uma sala com um número de jogadores inválido: " + totalJogadores)
             return { erro: "Número de jogadores deve ser entre 2 e 20"}
         }
-        if(!["publico", "privado"].includes(config.privacidade)){// Valida a privacidade
+        if(!["PUBLICO", "PRIVADO"].includes(config.privacidade.toUpperCase())){// Valida a privacidade
             console.log(jogador.nome + " tentou criar uma sala com uma privacidade inválida: " + config.privacidade)
             return { erro: "Privacidade deve ser 'publico' ou 'privado'"}
         }
@@ -60,7 +49,6 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "publico", funcoes 
             funcoes: config.funcoes,
             votos: []
         }
-        exports.EntrarSala(socket, jogador, codigo)
 
         return {ok: true, dados:{ Sala, mensagem: "Sala com o codigo "+codigo+" criada com sucesso"}}
     }catch(erro){
@@ -87,7 +75,7 @@ exports.EntrarSala = (socket, jogador, codigo) => {
 
         const jogadorExiste = Sala.jogadores[jogador.id]
         if(jogadorExiste){
-            console.log(jogador.nome + " ja existe na sala: " + code)
+            console.log(jogador.nome + " ja existe na sala: " + codigo)
             return { erro: "Jogador " + jogador.nome + " já existe na sala " + codigo}
         }
 
@@ -95,7 +83,7 @@ exports.EntrarSala = (socket, jogador, codigo) => {
             return { erro: "A sala "+codigo+" está cheia" }
         }
 
-        Sala.jogadores[jogador.id] = {
+        const jogadorNovo = Sala.jogadores[jogador.id] = {
             id: jogador.id,
             socket_id: socket.id,
             nome: jogador.nome,
@@ -104,7 +92,7 @@ exports.EntrarSala = (socket, jogador, codigo) => {
             efeitos: []
         }
         socket.join(codigo + "_GERAL")
-        return { ok: true, dados: { Sala, mensagem: jogador.nome + " entrou na sala "+codigo+" com sucesso" } }
+        return { ok: true, dados: { Sala, jogadorNovo ,mensagem: jogador.nome + " entrou na sala "+codigo+" com sucesso" } }
 
     }catch(erro){
         console.log("Erro ao entrar na sala: " + erro)
@@ -122,15 +110,20 @@ exports.SairSala = (socket, jogador, codigo) => {
 
         const jogadorNaSala = Sala.jogadores[jogador.id]
         if(!jogadorNaSala){
-            return { erro: jogadorNaSala.nome + " já não está na sala " + codigo}
+            return { erro: jogador.nome + " já não está na sala " + codigo}
         }
-        delete Sala.jogadores[jogadorNaSala.id]
+        delete Sala.jogadores[jogador.id]
         socket.leave(codigo+"_GERAL")
 
-        return { ok: true, dados:{jogador ,message: jogador.nome + " saiu da sala "+codigo+" com sucesso"} }
+        if(Object.keys(Sala.jogadores).length <= 0){
+            delete exports.Salas[codigo]
+            return { ok: true, dados:{Sala: false, jogador, message: jogador.nome + " saiu da sala "+codigo+" com sucesso"}}
+        }else{
+            return { ok: true, dados:{Sala, jogador,message: jogador.nome + " saiu da sala "+codigo+" com sucesso"} }
+        }
     
     }catch(erro){
-        console.log("Erro ao sair da sala: " + error)
+        console.log("Erro ao sair da sala: " + erro)
         return { erro }
     }
 
