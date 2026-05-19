@@ -76,33 +76,36 @@ export function iniciarTelaLobby() {
         }
     }
     
-    socket.emit("EntrarSala", codigoSala)
+    socket.emit("EntrarSala", codigoSala, (resposta) => {
+        if(resposta.ok){
+            renderizarLista(resposta.dados.Sala)
+        }
+        if(resposta.erro){
+            window.location.hash = "#salas"
+        }
+    })
+
     socket.on('EntrouNaSala', (sala, jogadorNovo) => {
         renderizarLista(sala);
     });
 
-    socket.on('SaiuDaSala', (salaAtualizada, jogador) => {
-        console.log(socket.jogador.id)
-        if (jogador.id === socket.jogador.id) {
-            localStorage.removeItem('codigo_sala_lobitos');
-            socket.off('EntrouNaSala');
-            socket.off('SaiuDaSala');
-            socket.off('PartidaIniciada');
-            window.location.hash = '#salas';
-            return
-        }
-        if(salaAtualizada){
-            renderizarLista(salaAtualizada);
-        }
-        
-    });
     socket.on('PartidaIniciada', () => {
         window.location.hash = '#jogo';
     });
 
     if (btnSair) {
         btnSair.addEventListener('click', () => {
-            socket.emit('SairSala', codigoSala);
+            window.location.hash = '#salas';
+            // socket.emit('SairSala', codigoSala, (resposta) => {
+            //     if (resposta.dados.jogador.id === socket.jogador.id) {
+            //         window.location.hash = '#salas';
+            //         return
+            //     }
+            //     if(resposta.dados.Sala){
+            //         renderizarLista(resposta.dados.Sala);
+            //     }
+                
+            // });
         });
     }
 }

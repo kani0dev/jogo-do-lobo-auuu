@@ -1,10 +1,32 @@
 export const socket = io({autoConnect: false});
-socket.on('carregarJogador', (jogador) => {
-    socket.jogador = jogador;
-});
+
+// socket.on('carregarJogador', (jogador) => {
+//     socket.jogador = jogador;
+// });
 
 socket.on("erro", (erro) => {
-    console.log(erro)
+    alert(erro)
+})
+
+socket.on("connect_error", (erro) => {
+    console.error("Erro ao conectar socket:", erro.message);
+    if (erro && erro.message &&
+        (erro.message.includes("Token inválido") ||
+         erro.message.includes("expirado") ||
+         erro.message.includes("Token não fornecido"))) {
+        localStorage.removeItem('token_lobitos');
+        socket.auth = {};
+        socket.disconnect();
+        window.location.hash = '#login';
+    }
+});
+
+socket.on("disconnect", () => {
+    localStorage.removeItem('token_lobitos');
+    localStorage.removeItem('codigo_sala_lobitos');
+    socket.auth = {};
+    socket.jogador = {}
+    window.location.hash = '#login';
 })
 // js/renderPage.js
 import { TelaLogin, iniciarTelaLogin } from './paginas/login.js';
@@ -18,52 +40,51 @@ const appContainer = document.getElementById('app');
  */
 
 //TODO: lidar com as disconnections. O q fazer quando desconectar? sair da sala? morrer na sala? oq acontece quando um player sai no meio da partida?
+//TODO: checar token com cada requisição do socket
 function roteadorSPA() {
-    
+    try{
+        const hash = window.location.hash || '#login'; // Padrão é ir para o login
+        
+        appContainer.innerHTML = '';// Limpa os elementos visuais antigos para evitar vazamento de eventos
+        switch (hash) {
+            case '#login':
+                appContainer.innerHTML = TelaLogin();
+                iniciarTelaLogin();
+                break;
+            case '#salas':
+                appContainer.innerHTML = TelaSalas();
+                iniciarTelaSalas();
+                break;
+            case '#lobby':
+                if (!localStorage.getItem('token_lobitos')) {
+                    window.location.hash = '#login';
+                    return;
+                }
+                appContainer.innerHTML = TelaLobby();
+                iniciarTelaLobby();
+                break;
 
-    const hash = window.location.hash || '#login'; // Padrão é ir para o login
-    
-
-    // Limpa os elementos visuais antigos para evitar vazamento de eventos
-    appContainer.innerHTML = '';
-
-    switch (hash) {
-        case '#login':
-            appContainer.innerHTML = TelaLogin();
-            iniciarTelaLogin();
-            break;
-        case '#salas':
-            if (!localStorage.getItem('token_lobitos')) {
-                window.location.hash = '#login';
-                return;
-            }
-            appContainer.innerHTML = TelaSalas();
-            iniciarTelaSalas();
-            break;
-        case '#lobby':
-            if (!localStorage.getItem('token_lobitos')) {
-                window.location.hash = '#login';
-                return;
-            }
-            appContainer.innerHTML = TelaLobby();
-            iniciarTelaLobby();
-            break;
-
-        default:
-            appContainer.innerHTML = `<h2>Página não encontrada (404)</h2><a href="#login">Ir para o Login</a>`;
-            break;
+            default:
+                appContainer.innerHTML = `<h2>Página não encontrada (404)</h2><a href="#login">Ir para o Login</a>`;
+                break;
+        }
+    }catch(erro){
+        console.log(erro)
     }
 }
 
 // Escuta quando o usuário clica em links ou muda a hash via código
 window.addEventListener('hashchange', (event) => {
-    roteadorSPA()
-
     const tokenSalvo = localStorage.getItem('token_lobitos');
-    if(!tokenSalvo) {
+    if(!tokenSalvo && !window.location.hash == "#login") {
+        console.log("eita")
         window.location.hash = "#login"
+        if(!socket.disconnected){
+            socket.disconnect()
+        }
+        return
     }
-
+   
     const hashAnterior = new URL(event.oldURL).hash;
     const hashNova = new URL(event.newURL).hash;
     if(["#lobby", "#jogo"].includes(hashAnterior) && !["#lobby", "#jogo"].includes(hashNova)){
@@ -73,7 +94,7 @@ window.addEventListener('hashchange', (event) => {
         }
         socket.emit("SairSala", codigoSala)
     }
-
+    roteadorSPA()
 
 });
 
