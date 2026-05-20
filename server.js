@@ -10,6 +10,7 @@ const { Server } = require('socket.io'); //importa o socket.io
 const { join } = require('node:path'); //importa o join, necessário pq o express não interpreta rotas relativas
 const GameSocket = require('./src/sockets/GameSocket.js') //importa o "GameSocket", onde a lógica do jogo existe
 const path = require('path');
+const util = require('util');
 require('dotenv').config();
 const endpointAuth = require("./src/services/JWTAuth")
 
@@ -68,7 +69,11 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(` Servidor rodando na porta ${PORT}`);
     console.log(` Acesse: http://localhost:${PORT}`);
-    const repl = require('repl').start('> ');
+    const repl = require('repl').start({
+        prompt: '> ',
+        writer: output => util.inspect(output, { colors: true, depth: null })
+    });
     repl.context.JogoService = require('./src/services/JogoService');
     repl.context.SalaManager = require('./src/services/SalaManager');
+    
 });

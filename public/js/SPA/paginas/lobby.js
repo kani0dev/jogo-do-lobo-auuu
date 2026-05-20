@@ -33,11 +33,17 @@ export function iniciarTelaLobby() {
     const acoesContainer = document.getElementById('acoes-lobby');
     const btnSair = document.getElementById('btn-sair-sala');
 
-    const codigoSala = localStorage.getItem('codigo_sala_lobitos'); 
+    socket.once('carregarJogador', (jogador) => {
+        socket.jogador = jogador
+    });
+
+    const codigoSala = localStorage.getItem('codigo_sala_lobitos');
     if(!codigoSala){
+        console.log("não tem codigo!!")
         window.location.hash = "#salas"
         return
     }
+
     
     function renderizarLista(sala) {
         if (!listaContainer) return;
@@ -77,15 +83,20 @@ export function iniciarTelaLobby() {
     }
     
     socket.emit("EntrarSala", codigoSala, (resposta) => {
-        if(resposta.ok){
-            renderizarLista(resposta.dados.Sala)
-        }
         if(resposta.erro){
-            window.location.hash = "#salas"
+            if(!resposta.erro.includes("já existe")){
+                window.location.hash = "#salas"
+                return
+            }
         }
+        renderizarLista(resposta.dados.Sala)
     })
 
     socket.on('EntrouNaSala', (sala, jogadorNovo) => {
+        renderizarLista(sala);
+    });
+
+    socket.on('SaiuDaSala', (sala, jogador) => {
         renderizarLista(sala);
     });
 
@@ -96,16 +107,6 @@ export function iniciarTelaLobby() {
     if (btnSair) {
         btnSair.addEventListener('click', () => {
             window.location.hash = '#salas';
-            // socket.emit('SairSala', codigoSala, (resposta) => {
-            //     if (resposta.dados.jogador.id === socket.jogador.id) {
-            //         window.location.hash = '#salas';
-            //         return
-            //     }
-            //     if(resposta.dados.Sala){
-            //         renderizarLista(resposta.dados.Sala);
-            //     }
-                
-            // });
         });
     }
 }

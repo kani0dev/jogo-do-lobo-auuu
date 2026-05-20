@@ -3,8 +3,6 @@ const JogoService = require("./JogoService")
 const ConstFuncoes = require("../constants/ConstFuncoes")
 
 
-//TODO: Por agora, os efeitos e seus resultados esrão hardcoded, seria interessante refatorar essa parte, mas nn sei se tem como tbm
-
 // Esse arquivo é quem vai controlar os estados da sala, um chamado "Maquina de estados" ou "StateMachine"
 exports.MudaEstadoDaSala = (codigo) => {
     try{ 
@@ -29,7 +27,7 @@ exports.MudaEstadoDaSala = (codigo) => {
                 }
                 Sala.sala_estado = "DISCUSSÃO"
                 break;
-            case "DISCUSSÃO": //TODO: Decidir em talvez ser uma discussão estilo among us, e não lobitos
+            case "DISCUSSÃO": 
                 Sala.sala_estado = "DIA"
                 break;
             case "DIA":
@@ -47,7 +45,6 @@ exports.MudaEstadoDaSala = (codigo) => {
 
         const FimDoJogo = ChecaFimDoJogo(codigo) 
         if(FimDoJogo.jogoAcabou){
-            //TODO: O que fazer a partir daqui? Enviar mensagem via socket pra room "Codigo_da_sala+'_GERAL'" e depois lidar com a mensagem no front
             return {ok: true, dados: {fim: true, equipeVencedora: FimDoJogo.equipeVencedora, Sala, mensagem: "Partida "+Sala.codigo+" finalizada" }}
         }
 

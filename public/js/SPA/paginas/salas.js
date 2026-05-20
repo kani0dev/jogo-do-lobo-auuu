@@ -35,7 +35,14 @@ export async function iniciarTelaSalas() {
     const nomeDisplay = document.getElementById('nome-display');
     const btnDeslogar = document.getElementById('btn-deslogar');
 
-    if (nomeDisplay) {
+    socket.once('carregarJogador', (jogador) => {
+        socket.jogador = jogador
+        if (nomeDisplay) {
+            nomeDisplay.textContent = `Olá, ${socket.jogador.nome}`;
+        }
+    });
+
+    if (nomeDisplay && socket.jogador){
         nomeDisplay.textContent = `Olá, ${socket.jogador.nome}`;
     }
 
@@ -53,7 +60,7 @@ export async function iniciarTelaSalas() {
         }
 
         salas.forEach(sala => {
-            const cardSala = document.createElement('div');//TODO: arrumar tudo aqui do front
+            const cardSala = document.createElement('div');
             cardSala.innerHTML = `
                 <div>
                     <span class="codigo-sala">#${sala.codigo}</span>

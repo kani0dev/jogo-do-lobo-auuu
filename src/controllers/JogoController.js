@@ -3,8 +3,6 @@ const JogoService = require("../services/JogoService")
 const jwt = require('jsonwebtoken')
 const jwt_secret = `${process.env.JWTSECRET}`
 
-//TODO: Mudar pra ca as requisições do socket, GameSocket -> JogoController -> JogoService/SalaManager
-
 exports.listarSalasPublicas = (req, res) => {
     try{
         const todasAsSalas = Object.values(SalaManager.Salas);

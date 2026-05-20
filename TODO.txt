@@ -1,0 +1,31 @@
+----public/js/SPA/renderPage.js----
+
+//TODO: lidar com as disconnections. O q fazer quando desconectar? sair da sala? morrer na sala? 
+oq acontece quando um player sai no meio da partida?
+
+//TODO: arrumar as páginas do front certinho, adicionar css, mudar layout e etc
+
+---src/sockets/GameSocket.js----
+
+//TODO: Mandar as requisições pro controller e não direto daqui pros services
+
+---src/services/SalaManager.js---
+
+//TODO: Adicionar funcionalidade pra banir/expulsar pessoas da sala
+
+//TODO: Seria interessante ter uma função pra espectar a partida, 
+fazendo com q ainda que a sala esteja cheia, voce possa entrar como espectador
+
+//TODO: refatorar o objeto do jogador, colocar uma varivel vivo talvez
+em vez de usar estado pra saber se ja performou a ação e esta vivo ao mesmo tempo
+
+---src/services/JogoStateMachine.js---
+
+//TODO: Por agora, os efeitos e seus resultados esrão hardcoded, seria interessante refatorar essa parte, mas nn sei se tem como tbm
+
+//TODO: Decidir em talvez ser uma discussão estilo among us, e não lobitos, 
+poder conversar enquanto votam e não ter um tempo dedicado pra conversar e outro dedicado pra votar
+
+//TODO: O que fazer a partir daqui?(FimDoJogo) Enviar mensagem via socket pra room "Codigo_da_sala+'_GERAL'" 
+e depois lidar com a mensagem no front
+

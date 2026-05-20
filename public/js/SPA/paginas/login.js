@@ -15,17 +15,20 @@ export function TelaLogin() {
 
 export function iniciarTelaLogin() {
     socket.once('carregarJogador', (jogador) => {
-        console.log("teste")
         socket.jogador = jogador
         window.location.hash = '#salas';
     });
 
     const tokenSalvo = localStorage.getItem('token_lobitos');
     if(tokenSalvo){
-        socket.auth = {
-            token: tokenSalvo // Passa o token aqui dentro do objeto auth
-        };
-        socket.connect();
+        if(!socket.connected){
+            socket.auth = {
+                token: tokenSalvo // Passa o token aqui dentro do objeto auth
+            };
+            socket.connect();
+        }else{
+            window.location.hash = '#salas';
+        }
         return
     }
 

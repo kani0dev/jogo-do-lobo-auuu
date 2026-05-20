@@ -3,8 +3,6 @@ const JogoStateMachine = require("./JogoStateMachine.js")
 
 exports.Salas = {}
 
-//TODO: Expulsar/Banir da sala
-
 exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1},{nome:"Ovelha", quantidade: 9}]}) => {
     try{
         // Muitissimas validações, lol
@@ -43,8 +41,6 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes 
             quantidade_jogadores: totalJogadores,
             anfitriao: jogador.id,
             jogadores: {},
-            //TODO: Seria interessante ter uma função pra espectar a partida, 
-            //TODO: fazendo com q ainda que a sala esteja cheia, voce possa entrar como espectador
             //espectadores:{},  
             funcoes: config.funcoes,
             votos: []
@@ -57,8 +53,6 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes 
     }
 }
 
-//TODO: refatorar o objeto do jogador, colocar uma varivel vivo talvez
-//TODO: em vez de usar estado pra saber se ja performou a ação e esta vivo ao mesmo tempo
 
 exports.EntrarSala = (socket, jogador, codigo) => {
     try{
@@ -76,7 +70,7 @@ exports.EntrarSala = (socket, jogador, codigo) => {
         const jogadorExiste = Sala.jogadores[jogador.id]
         if(jogadorExiste){
             console.log(jogador.nome + " ja existe na sala: " + codigo)
-            return { erro: "Jogador " + jogador.nome + " já existe na sala " + codigo}
+            return { erro: "Jogador " + jogador.nome + " já existe na sala " + codigo, dados:{Sala}}
         }
 
         if(Object.keys(Sala.jogadores).length >= Sala.quantidade_jogadores){
@@ -112,8 +106,12 @@ exports.SairSala = (socket, jogador, codigo) => {
         if(!jogadorNaSala){
             return { erro: jogador.nome + " já não está na sala " + codigo}
         }
+        if(jogador.id == Sala.anfitriao && Object.keys(Sala.jogadores).length > 1){
+            Sala.anfitriao = Object.keys(Sala.jogadores)[1]
+        }
         delete Sala.jogadores[jogador.id]
         socket.leave(codigo+"_GERAL")
+        
 
         if(Object.keys(Sala.jogadores).length <= 0){
             delete exports.Salas[codigo]

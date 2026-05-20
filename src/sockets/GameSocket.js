@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const jwt_secret = `${process.env.JWTSECRET}`
 
 //* Aqui é onde as requisições do socket são recebidas e passadas pro controller
-//TODO: Mandar as requisições pro controller e não direto daqui pros services
 module.exports = (io) => {
     io.use((socket, next) => { // Middleware que checa o token do jogador antes de conectar o socket
         const token = socket.handshake.auth.token;
@@ -52,9 +51,14 @@ module.exports = (io) => {
             callback(resposta)
             if(resposta.ok){
                 socket.broadcast.to(codigo+"_GERAL").emit("EntrouNaSala", resposta.dados.Sala, resposta.dados.jogadorNovo)
+                socket.codigoDaSala = codigo
             }
             if(resposta.erro){
-                socket.emit("erro", resposta)
+                if(!resposta.erro.includes("já existe")){
+                    socket.emit("erro", resposta)
+                    return
+                }
+                socket.codigoDaSala = codigo
             }
         });
 
@@ -78,13 +82,17 @@ module.exports = (io) => {
         })
 
         // Lógica de sair da sala
-        socket.on("SairSala", (codigo, callback) => {
-            const resposta = SalaManager.SairSala(socket, socket.jogador, codigo)
+        socket.on("SairSala", (callback) => {
+            if(!socket.codigoDaSala){
+                return
+            }
+            const resposta = SalaManager.SairSala(socket, socket.jogador, socket.codigoDaSala)
             if(callback){
                 callback(resposta)
             }
             if(resposta.ok){
-                io.to(codigo+"_GERAL").emit("SaiuDaSala", resposta.dados.Sala, resposta.dados.jogador)
+                io.to(socket.codigoDaSala+"_GERAL").emit("SaiuDaSala", resposta.dados.Sala, resposta.dados.jogador)
+                socket.codigoDaSala = null
             }
             if(resposta.erro){
                 socket.emit("erro", resposta)

@@ -5,7 +5,7 @@ export const socket = io({autoConnect: false});
 // });
 
 socket.on("erro", (erro) => {
-    alert(erro)
+    alert(JSON.stringify(erro.erro))
 })
 
 socket.on("connect_error", (erro) => {
@@ -21,12 +21,13 @@ socket.on("connect_error", (erro) => {
     }
 });
 
-socket.on("disconnect", () => {
-    localStorage.removeItem('token_lobitos');
-    localStorage.removeItem('codigo_sala_lobitos');
-    socket.auth = {};
+socket.on("disconnect", (reason) => {
+    socket.emit("SairSala")
+    localStorage.removeItem('token_lobitos')
+    localStorage.removeItem('codigo_sala_lobitos')
+    socket.auth = {}
     socket.jogador = {}
-    window.location.hash = '#login';
+    window.location.hash = '#login'
 })
 // js/renderPage.js
 import { TelaLogin, iniciarTelaLogin } from './paginas/login.js';
@@ -39,8 +40,6 @@ const appContainer = document.getElementById('app');
  * Função responsável por mapear as hashes e renderizar as telas correspondentes
  */
 
-//TODO: lidar com as disconnections. O q fazer quando desconectar? sair da sala? morrer na sala? oq acontece quando um player sai no meio da partida?
-//TODO: checar token com cada requisição do socket
 function roteadorSPA() {
     try{
         const hash = window.location.hash || '#login'; // Padrão é ir para o login
@@ -75,9 +74,10 @@ function roteadorSPA() {
 
 // Escuta quando o usuário clica em links ou muda a hash via código
 window.addEventListener('hashchange', (event) => {
+    const hash = window.location.hash
     const tokenSalvo = localStorage.getItem('token_lobitos');
-    if(!tokenSalvo && !window.location.hash == "#login") {
-        console.log("eita")
+    if(!tokenSalvo && !(hash == "#login")) {
+        alert("Para entrar na pagina: '"+hash+"', é nescessário logar ou entrar como convidado")
         window.location.hash = "#login"
         if(!socket.disconnected){
             socket.disconnect()
@@ -88,11 +88,9 @@ window.addEventListener('hashchange', (event) => {
     const hashAnterior = new URL(event.oldURL).hash;
     const hashNova = new URL(event.newURL).hash;
     if(["#lobby", "#jogo"].includes(hashAnterior) && !["#lobby", "#jogo"].includes(hashNova)){
-        const codigoSala = localStorage.getItem("codigo_sala_lobitos")
-        if(!codigoSala){
-            return
-        }
-        socket.emit("SairSala", codigoSala)
+        console.log("saiu da sala")
+        socket.emit("SairSala")
+        localStorage.removeItem('codigo_sala_lobitos');
     }
     roteadorSPA()
 
@@ -100,21 +98,16 @@ window.addEventListener('hashchange', (event) => {
 
 // Executa a primeira vez quando a página é carregada do zero
 window.addEventListener('DOMContentLoaded', () => {
-    roteadorSPA()
     const tokenSalvo = localStorage.getItem('token_lobitos');
-    if (tokenSalvo) {
+    if(tokenSalvo) {
         socket.auth = { token: tokenSalvo }; 
         socket.connect();
     }else{
         window.location.hash = "#login"
     }
+    roteadorSPA()
 });
 
 window.addEventListener('beforeunload', () => {
-    const codigoSala = localStorage.getItem("codigo_sala_lobitos")
-    if(!codigoSala){
-        return
-    }
-    socket.emit("SairSala", codigoSala)
-    localStorage.removeItem('codigo_sala_lobitos');
+   
 });
