@@ -1,0 +1,42 @@
+/* CSS Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Cores. Sujeito a alterações */
+:root {
+    --prim-color: #5a448d;
+    --sec-color: #F9F1AE;
+    --ter-color: #FFEF5F;
+    --accent-color: #463BBD;
+    --font-color1: #FCFAEC;
+    --font-color2: #000000;
+}
+
+/* Aqui é estilização da página de login */
+#login {
+    border: blue 2px solid;
+    padding: 3em;
+    height: 100vh;
+    /* background-image: url("/public/assets/imgs/background-login.png"); */
+    background: linear-gradient(to bottom right, var(--prim-color), var(--accent-color));
+    display: flex;
+    flex-flow: column;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.logo {
+    height: 7em;
+    width: 7em;
+}
+
+#login-box {
+    display: flex;
+    flex-flow: column wrap;
+    background: var(--sec-color);
+    padding: 2em;
+    border-radius: 2em;
+}

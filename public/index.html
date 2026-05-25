@@ -5,17 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lobitos - Jogo de Mistério</title>
     <!-- CSS Principal -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
     <!-- O container onde todo o jogo acontece dinamicamente -->
     <div id="app">
-
+        <main id="login">
+            <img src="https://previews.123rf.com/images/provector/provector1805/provector180500099/102141890-wolf-silhouette-isolated-on-white-background-vector-illustration-wolf-head-vector-graphic-emblem.jpg" 
+            alt="vetor de lobo pra placeholder da nossa logo"
+            class="logo">
+            <section id="login-box">
+                <h2>Entrar no Lobitos</h2>
+                <input type="text" id="nome-jogador" placeholder="Digite seu nome de usuário"/>
+                <input type="password" id="senha-jogador" placeholder="Digite sua senha"/>
+                <button id="btn-logar">Entrar no Jogo</button>
+                <p>OU</p>
+                <input type="text" id="nome-convidado" placeholder="Digite seu nome de usuário"/>
+                <button id="btn-convidado">Entrar como convidado</button>
+            </section>
+        </main>
     </div>
 
     <script src="../socket.io/socket.io.js"></script>
     <!-- <script src="js/main.js"></script> -->
     <!-- Script Principal que gerencia o SPA (carregado como módulo) -->
-    <script type="module" src="js/SPA/renderPage.js"></script>
+    <!-- <script type="module" src="js/SPA/renderPage.js"></script> -->
 </body>
 </html>
