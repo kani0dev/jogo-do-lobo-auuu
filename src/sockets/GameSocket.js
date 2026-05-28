@@ -13,6 +13,7 @@ module.exports = (io) => {
         try {
             const decodificado = jwt.verify(token, jwt_secret);            
             socket.jogador = decodificado
+            socket.codigoDaSala = null
             next(); 
         } catch (erro) {
             return next(new Error("Token inválido ou expirado."));
@@ -34,7 +35,7 @@ module.exports = (io) => {
                 return next(new Error("Token inválido ou expirado."));
             }
         });
-        socket.emit('carregarJogador', socket.jogador); // Manda as informações do jogador pro cliente pra ele mandar 
+        socket.emit('carregarJogador', socket.jogador, socket.codigoDaSala); // Manda as informações do jogador pro cliente pra ele mandar 
         
         // Lógica de criar sala
         socket.on("CriarSala", (callback) => {
@@ -60,6 +61,16 @@ module.exports = (io) => {
                 }
                 socket.codigoDaSala = codigo
             }
+        });
+
+        socket.on("ReconectarSala", (codigo, callback) => {
+            const resposta = SalaManager.ReconectarSala(socket, socket.jogador, codigo)
+            callback(resposta)
+            if(resposta.ok){
+                socket.codigoDaSala = codigo
+            } //else if(resposta.erro){
+            //     socket.emit("erro", resposta)
+            // }
         });
 
         socket.on("ListarSalasPublicas", (callback) => {
@@ -99,8 +110,23 @@ module.exports = (io) => {
             }
         });
 
-        socket.on("IniciarPartida", (codigo) => {
+        socket.on("MudarProntidão", (codigo, callback) => {
+            const resposta = SalaManager.MudarProntidao(socket, socket.jogador, codigo)
+            if(callback){
+                callback(resposta.dados.Jogador)
+            }
+            if(resposta.ok){
+                io.to(codigo+"_GERAL").emit("AtualizaSala", resposta.dados.Sala)
+            }
+            if(resposta.erro){
+                socket.emit("erro", resposta)
+            }
+        })
+
+        socket.on("IniciarPartida", (codigo, callback) => {
             const resposta = SalaManager.ComecarJogo(socket, socket.jogador, codigo)
+            console.log(resposta)
+            callback()
             if(resposta.ok){
                  io.to(codigo+"_GERAL").emit("PartidaIniciada", resposta.dados.Sala)
             }else{

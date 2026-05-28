@@ -17,6 +17,7 @@ export function TelaLobby() {
 
             <div id="acoes-lobby">
                 <p class="texto-espera">Aguardando o anfitrião iniciar a partida...</p>
+                <button id="btn-pronto">ficar pronto</button>
             </div>
 
             <button id="btn-sair-sala">
@@ -31,7 +32,6 @@ export function iniciarTelaLobby() {
     const tituloCodigo = document.getElementById('codigo-sala-titulo');
     const statusVagas = document.getElementById('status-vagas');
     const acoesContainer = document.getElementById('acoes-lobby');
-    const btnSair = document.getElementById('btn-sair-sala');
 
     socket.once('carregarJogador', (jogador) => {
         socket.jogador = jogador
@@ -44,7 +44,31 @@ export function iniciarTelaLobby() {
         return
     }
 
-    
+    function reconectarOuEntrar() {
+        socket.emit('ReconectarSala', codigoSala, (resposta) => {
+            if (resposta.ok) {
+                renderizarLista(resposta.dados.Sala)
+                return
+            }
+
+            socket.emit('EntrarSala', codigoSala, (respostaEntrar) => {
+                if(respostaEntrar.erro){
+                    if(!respostaEntrar.erro.includes("já existe")){
+                        window.location.hash = "#salas"
+                        return
+                    }
+                }
+                renderizarLista(respostaEntrar.dados.Sala)
+            })
+        })
+    }
+
+    if (socket.connected) {
+        reconectarOuEntrar();
+    } else {
+        socket.once('connect', reconectarOuEntrar);
+    }
+
     function renderizarLista(sala) {
         if (!listaContainer) return;
         
@@ -59,38 +83,43 @@ export function iniciarTelaLobby() {
             const sufixoVoce = jogador.id === socket.jogador.id ? ' (Você)' : '';
             
             itemJogador.innerHTML = `
-            <div class="avatar-jogador ${ehAnfitriao ? 'dono' : ''}"></div>
-            <span class="nome-jogador">${jogador.nome}${sufixoVoce}</span>
-            ${ehAnfitriao ? '<span class="badge-dono">★ Líder</span>' : ''}
+                <div class="avatar-jogador ${ehAnfitriao ? 'dono' : ''}"></div>
+                <span class="nome-jogador">${jogador.nome}${sufixoVoce}</span>
+                ${ehAnfitriao ? '<span class="badge-dono">★ Líder</span>' : ''}
             `;
             listaContainer.appendChild(itemJogador);
         });
         // Configura os botões de ação baseado em quem você é
         if (sala.anfitriao === socket.jogador.id) {
             acoesContainer.innerHTML = `
-            <button id="btn-iniciar-jogo">
-            ➔ Iniciar Partida
-            </button>
+                <button id="btn-iniciar-jogo">
+                ➔ Iniciar Partida
+                </button>
             `;
             
             const btnIniciar = document.getElementById('btn-iniciar-jogo');
             btnIniciar.addEventListener('click', () => {
-                socket.emit('IniciarPartida', socket.jogador, sala.codigo);
+                socket.emit('IniciarPartida', sala.codigo, ()=>{
+                    window.location.hash = "#jogo"
+                });
             });
         } else {
-            acoesContainer.innerHTML = `<p class="texto-espera">Aguardando o anfitrião iniciar a partida...</p>`;
+            acoesContainer.innerHTML = `
+                <p class="texto-espera">Aguardando o anfitrião iniciar a partida...</p>
+                <button id="btn-pronto">ficar pronto</button>
+            `;
+            const btnPronto = document.getElementById('btn-pronto');
+            if(btnPronto){
+                btnPronto.addEventListener('click', () => {
+                    socket.emit("MudarProntidão", sala.codigo,(jogador)=>{
+                        btnPronto.innerText = jogador.estado
+                    })
+                });
+            }
         }
     }
     
-    socket.emit("EntrarSala", codigoSala, (resposta) => {
-        if(resposta.erro){
-            if(!resposta.erro.includes("já existe")){
-                window.location.hash = "#salas"
-                return
-            }
-        }
-        renderizarLista(resposta.dados.Sala)
-    })
+    // O envio do evento para entrar na sala é tratado por reconectarOuEntrar()
 
     socket.on('EntrouNaSala', (sala, jogadorNovo) => {
         renderizarLista(sala);
@@ -104,7 +133,8 @@ export function iniciarTelaLobby() {
         window.location.hash = '#jogo';
     });
 
-    if (btnSair) {
+    const btnSair = document.getElementById('btn-sair-sala');
+    if(btnSair) {
         btnSair.addEventListener('click', () => {
             window.location.hash = '#salas';
         });

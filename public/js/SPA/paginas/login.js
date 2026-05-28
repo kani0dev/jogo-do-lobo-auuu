@@ -61,7 +61,6 @@ export function iniciarTelaLogin() {
 
                 if (response.ok && data.token) {
                     // SALVA NO LOCALSTORAGE DO NAVEGADOR
-                    localStorage.removeItem('token_lobitos')
                     localStorage.setItem('token_lobitos', data.token);
                     socket.auth = {
                         token: data.token // Passa o token aqui dentro do objeto auth

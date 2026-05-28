@@ -4,9 +4,11 @@ const ConstFuncoes = require("../constants/ConstFuncoes")
 
 
 // Esse arquivo é quem vai controlar os estados da sala, um chamado "Maquina de estados" ou "StateMachine"
+
+
 exports.MudaEstadoDaSala = (codigo) => {
     try{ 
-        const Sala = SalaManager[codigo]
+        const Sala = SalaManager.Salas[codigo]
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
@@ -54,6 +56,7 @@ exports.MudaEstadoDaSala = (codigo) => {
             }
             j.estado = "NAO PRONTO"
         }
+        console.log(Sala.sala_estado)
         return {ok: true, dados: {Sala, mensagem: "Sala "+codigo+" mudou o estado para: "+Sala.sala_estado}}
     }catch(erro){
         return { erro }

@@ -3,7 +3,7 @@ const JogoStateMachine = require("./JogoStateMachine.js")
 
 exports.Salas = {}
 
-exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1},{nome:"Ovelha", quantidade: 9}]}) => {
+exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 2}]}) => {
     try{
         // Muitissimas validações, lol
         const totalJogadores = config.funcoes.reduce((total, funcao) => total + funcao.quantidade, 0)
@@ -140,7 +140,7 @@ exports.ReconectarSala = (socket, jogador, codigo) => {
         Jogador.socket_id = socket.id
         socket.join(codigo + "_GERAL")
         socket.to(codigo+"_GERAL").emit("Reconectou", Jogador)
-        return {ok: true, dados: {Jogador}}
+        return {ok: true, dados: {Jogador, Sala}}
     }catch(erro){
         return { erro }
     }
@@ -240,14 +240,14 @@ exports.ComecarJogo = (socket, jogador, codigo)=>{
             return { erro: "A quantidade de jogadores não bate com a quantidade de papeis"}
         }
         
+        Jogador.estado = "PRONTO"
         for(const j of Object.values(Sala.jogadores)){
             if(j.estado.toUpperCase() != "PRONTO"){
                 return {erro: "Todos os jogadores devem estar prontos pra partida começar"}
             }
         }
 
-        const IniciaJogo = JogoStateMachine.IniciaJogo(codigo)
-
+        const IniciaJogo = JogoStateMachine.MudaEstadoDaSala(codigo)
         if(IniciaJogo.ok){
             return { ok: true, dados: {Sala} }
         }else{

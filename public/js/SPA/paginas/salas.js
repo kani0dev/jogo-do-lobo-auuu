@@ -34,8 +34,7 @@ export async function iniciarTelaSalas() {
     const btnCriarSala = document.getElementById('btn-criar-sala');
     const nomeDisplay = document.getElementById('nome-display');
     const btnDeslogar = document.getElementById('btn-deslogar');
-
-    socket.once('carregarJogador', (jogador) => {
+    socket.once('carregarJogador', (jogador) => { //chamado uma vez que vc tenta reconectar (dar f5 na pagina por exemplo)
         socket.jogador = jogador
         if (nomeDisplay) {
             nomeDisplay.textContent = `Olá, ${socket.jogador.nome}`;
@@ -105,10 +104,12 @@ export async function iniciarTelaSalas() {
         })
     }
 
-    if(btnDeslogar){ 
+    if(btnDeslogar){ //TODO: mudar esse botão pra ele se manter em outras páginas
         btnDeslogar.addEventListener("click", ()=> {
+            socket.manualDisconnect = true;
             socket.disconnect()
             localStorage.removeItem("token_lobitos")
+            localStorage.removeItem("codigo_sala_lobitos")
             window.location.hash = "#login"
         })
     }

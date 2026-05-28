@@ -1,6 +1,7 @@
 export const socket = io({autoConnect: false});
+socket.manualDisconnect = false;
 
-// socket.on('carregarJogador', (jogador) => {
+// socket.once('carregarJogador', (jogador) => {
 //     socket.jogador = jogador;
 // });
 
@@ -21,18 +22,18 @@ socket.on("connect_error", (erro) => {
     }
 });
 
-socket.on("disconnect", (reason) => {
-    socket.emit("SairSala")
-    localStorage.removeItem('token_lobitos')
-    localStorage.removeItem('codigo_sala_lobitos')
-    socket.auth = {}
-    socket.jogador = {}
-    window.location.hash = '#login'
-})
+socket.on("disconnecting", () => {
+    if (!socket.manualDisconnect) {
+        return;
+    }
+    window.location.hash = '#login';
+});
+
 // js/renderPage.js
 import { TelaLogin, iniciarTelaLogin } from './paginas/login.js';
 import { TelaLobby, iniciarTelaLobby } from './paginas/lobby.js';
 import { TelaSalas, iniciarTelaSalas} from './paginas/salas.js';
+import { TelaJogo, iniciarTelaJogo } from './paginas/jogo.js';
 
 const appContainer = document.getElementById('app');
 
@@ -55,14 +56,13 @@ function roteadorSPA() {
                 iniciarTelaSalas();
                 break;
             case '#lobby':
-                if (!localStorage.getItem('token_lobitos')) {
-                    window.location.hash = '#login';
-                    return;
-                }
                 appContainer.innerHTML = TelaLobby();
                 iniciarTelaLobby();
                 break;
-
+            case '#jogo':
+                appContainer.innerHTML = TelaJogo();
+                iniciarTelaJogo();
+                break;
             default:
                 appContainer.innerHTML = `<h2>Página não encontrada (404)</h2><a href="#login">Ir para o Login</a>`;
                 break;
