@@ -1,6 +1,6 @@
 ----public/js/SPA/renderPage.js----
 
-//TODO: lidar com as disconnections. O q fazer quando desconectar? sair da sala? morrer na sala? 
+//TODO: lidar com as disconnections. O q fazer quando desconectar? morrer na sala? 
 oq acontece quando um player sai no meio da partida?
 
 //TODO: arrumar as páginas do front certinho, adicionar css, mudar layout e etc

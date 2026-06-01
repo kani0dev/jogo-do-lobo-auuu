@@ -107,7 +107,3 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     roteadorSPA()
 });
-
-window.addEventListener('beforeunload', () => {
-   
-});

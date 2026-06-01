@@ -4,10 +4,10 @@ import { socket } from '../renderPage.js';
 export function TelaLobby() {
     return `
         <div>
-            <div>
+            <header>
                 <h2>Sala: <span id="codigo-sala-titulo">------</span></h2>
                 <span id="status-vagas">0/0 Jogadores</span>
-            </div>
+            </header>
             
             <p>Aguardando na fila de prontidão...</p>
 
@@ -70,7 +70,12 @@ export function iniciarTelaLobby() {
     }
 
     function renderizarLista(sala) {
+        if(sala.sala_estado.toUpperCase() != "ESPERANDO"){ //Se a partida ja comecou, ele manda o jogador pra pagina de jogo
+            window.location.hash = "#jogo"
+        }
+        
         if (!listaContainer) return;
+
         
         tituloCodigo.textContent = sala.codigo;
         statusVagas.textContent = `${Object.keys(sala.jogadores).length}/${sala.quantidade_jogadores}`;
@@ -106,7 +111,7 @@ export function iniciarTelaLobby() {
         } else {
             acoesContainer.innerHTML = `
                 <p class="texto-espera">Aguardando o anfitrião iniciar a partida...</p>
-                <button id="btn-pronto">ficar pronto</button>
+                <button id="btn-pronto">NÃO PRONTO</button>
             `;
             const btnPronto = document.getElementById('btn-pronto');
             if(btnPronto){

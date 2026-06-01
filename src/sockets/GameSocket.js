@@ -1,5 +1,6 @@
 const JogoService = require('../services/JogoService')
 const SalaManager = require('../services/SalaManager')
+const ConstFuncoes = require('../constants/ConstFuncoes')
 const jwt = require('jsonwebtoken');
 const jwt_secret = `${process.env.JWTSECRET}`
 
@@ -22,7 +23,7 @@ module.exports = (io) => {
     
     
     io.on('connection', (socket) => {
-        console.log(socket.id + ' conectado');
+        console.log(socket.jogador.nome + ' conectado');
         socket.use((packet, next) => { // Middleware que checa o token do jogador após cada requisição do socket
             const token = socket.handshake.auth.token;
             if (!token) {
@@ -81,15 +82,36 @@ module.exports = (io) => {
             callback({ ok: true, dados:{salas: salasPublicas}})
         });
 
-        socket.on("BuscarSala", (codigo) => {
+        socket.on("BuscarEstadoDaSala", (codigo, callback) => {
             const Sala = SalaManager.Salas[codigo]
             if(!Sala){
                  socket.emit("erro", {erro: "Sala com codigo "+codigo+" não encontrada"})
+                 callback({erro: "Sala com codigo "+codigo+" não encontrada"})
                  return
             }
+            if(!Sala.jogadores[socket.jogador.id]){
+                socket.emit("erro", {erro: socket.jogador.nome + " não encontrado na sala "+codigo})
+                return {erro: socket.jogador.nome + " não encontrado na sala "+codigo}
+            }
+            // Usei o gemini, admito XP, mas aqui ele trata o objeto de sala a ser enviado 
+            // pra nn ter chance do usuario de alguma forma acessar essas informações e burlar o jogo
+            // 1. Tiramos 'jogadores' e 'votos' (e o que mais for secreto) e guardamos o resto em 'SalaTratada'
+            const { jogadores, votos, ...SalaTratada } = Sala;
+            // 2. (Opcional) Se você quiser mandar a lista de jogadores, mas APENAS com informações públicas 
+            // (ex: só o nome e id, sem a função secreta de Lobisomem de cada um):
+            SalaTratada.jogadores = {}
 
-
-            socket.emit("SalaEncontrada", Sala)
+            for(id in Sala.jogadores){
+                const j = Sala.jogadores[id];
+                SalaTratada.jogadores[id] = {
+                    id: j.id,
+                    nome: j.nome,
+                    estado: j.estado,
+                    //funcao: j.id == socket.jogador.id ? j.funcao : null
+                };
+            }
+            const jogador = Sala.jogadores[socket.jogador.id]
+            callback({ ok: true, dados:{Sala: SalaTratada, Funcao: ConstFuncoes.Funcoes[jogador.funcao]}})
         })
 
         // Lógica de sair da sala
@@ -125,7 +147,6 @@ module.exports = (io) => {
 
         socket.on("IniciarPartida", (codigo, callback) => {
             const resposta = SalaManager.ComecarJogo(socket, socket.jogador, codigo)
-            console.log(resposta)
             callback()
             if(resposta.ok){
                  io.to(codigo+"_GERAL").emit("PartidaIniciada", resposta.dados.Sala)

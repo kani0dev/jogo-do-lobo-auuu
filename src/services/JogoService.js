@@ -13,7 +13,6 @@ exports.DistribuirPapeis = (codigo) => {
         if(JogoNaoComecou){
             return {erro: "O jogo da sala "+codigo+" ainda não começou"}
         }
-
         const funcoesLista = Sala.funcoes.flatMap(funcao => //Pega as funcoes da sala e as distribui em uma array
             Array.from({ length: funcao.quantidade }, () => funcao.nome)
         );
@@ -26,7 +25,6 @@ exports.DistribuirPapeis = (codigo) => {
         Object.values(Sala.jogadores).forEach((jogador, index) => { // Atribui as funcoes pra cada jogador
             jogador.funcao = funcoesLista[index]
         })
-
         return {ok: true, dados: { Sala, mensagem: "Papeis da sala "+codigo+" distribuidos com sucesso" }}
     }catch(erro){
         return { erro }

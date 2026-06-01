@@ -16,7 +16,7 @@ exports.MudaEstadoDaSala = (codigo) => {
         switch(Sala.sala_estado.toUpperCase()){
             case "ESPERANDO":
                 Sala.sala_estado = "NOITE"
-                JogoService.DistribuirPapeis()
+                JogoService.DistribuirPapeis(codigo)
                 break;
             case "NOITE":
                 for(const j of Object.values(Sala.jogadores)){
@@ -45,10 +45,10 @@ exports.MudaEstadoDaSala = (codigo) => {
         // mudar isso mais pra frente pra deixar mais modular 
         // caso tenham funcoes com condições mais especificas pra ganhar
 
-        const FimDoJogo = ChecaFimDoJogo(codigo) 
-        if(FimDoJogo.jogoAcabou){
-            return {ok: true, dados: {fim: true, equipeVencedora: FimDoJogo.equipeVencedora, Sala, mensagem: "Partida "+Sala.codigo+" finalizada" }}
-        }
+        // const FimDoJogo = ChecaFimDoJogo(codigo) 
+        // if(FimDoJogo.jogoAcabou){
+        //     return {ok: true, dados: {fim: true, equipeVencedora: FimDoJogo.equipeVencedora, Sala, mensagem: "Partida "+Sala.codigo+" finalizada" }}
+        // }
 
         for(const j of Object.values(Sala.jogadores)){ // reseta estado dos players
             if(j.estado.toUpperCase() == "MORTO"){ //ignora players mortos
@@ -56,7 +56,6 @@ exports.MudaEstadoDaSala = (codigo) => {
             }
             j.estado = "NAO PRONTO"
         }
-        console.log(Sala.sala_estado)
         return {ok: true, dados: {Sala, mensagem: "Sala "+codigo+" mudou o estado para: "+Sala.sala_estado}}
     }catch(erro){
         return { erro }

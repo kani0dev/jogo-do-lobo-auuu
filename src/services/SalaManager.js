@@ -3,14 +3,10 @@ const JogoStateMachine = require("./JogoStateMachine.js")
 
 exports.Salas = {}
 
-exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 2}]}) => {
+exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1}, {nome:"Ovelha", quantidade: 1}]}) => {
     try{
         // Muitissimas validações, lol
         const totalJogadores = config.funcoes.reduce((total, funcao) => total + funcao.quantidade, 0)
-        if(socket.rooms.size > 1){// Valida se o jogador ja esta em uma sala
-            console.log(socket.id + " tentou criar uma sala enquanto já estava em outra sala")
-            return { erro: "Você já está em uma sala"}
-        }
         if(totalJogadores < 2 || totalJogadores > 20){// Valida a quantidade de jogadores
             console.log(jogador.nome + " tentou criar uma sala com um número de jogadores inválido: " + totalJogadores)
             return { erro: "Número de jogadores deve ser entre 2 e 20"}
