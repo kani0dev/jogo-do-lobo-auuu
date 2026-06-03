@@ -16,6 +16,7 @@ socket.on("connect_error", (erro) => {
          erro.message.includes("expirado") ||
          erro.message.includes("Token não fornecido"))) {
         localStorage.removeItem('token_lobitos');
+        localStorage.removeItem('codigo_sala_lobitos');
         socket.auth = {};
         socket.disconnect();
         window.location.hash = '#login';

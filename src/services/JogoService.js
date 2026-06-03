@@ -31,7 +31,7 @@ exports.DistribuirPapeis = (codigo) => {
     }
 }
 
-exports.PerformarAção = (socket, jogador, codigo, JogadorAlvo = null) => {
+exports.Agir = (socket, jogador, codigo, AlvoId = null) => {
     try{
         //Validações da sala
         const Sala = SalaManager.Salas[codigo]
@@ -39,7 +39,7 @@ exports.PerformarAção = (socket, jogador, codigo, JogadorAlvo = null) => {
             return { erro: "Sala "+codigo+", não existe" }
         }
         if(Sala.sala_estado.toUpperCase() != "NOITE"){
-            return { erro: jogador.nome + " tentou performar uma ação sem ser a noite"}
+            return { erro: jogador.nome + " tentou agir sem ser a noite"}
         }
 
         //Validações do jogador
@@ -48,13 +48,13 @@ exports.PerformarAção = (socket, jogador, codigo, JogadorAlvo = null) => {
             return { erro: jogador.nome + " não está na sala " + codigo}
         }
         if(JogadorOrigem.estado.toUpperCase() == "PRONTO"){
-            return { erro: jogador.nome + " já performou a sua ação "}
+            return { erro: jogador.nome + " já agiu na noite de hoje"}
         }
 
         //Valida se o jogador tem uma função e um alvo
         const Acao = ConstFuncoes.Funcoes[JogadorOrigem.funcao].acao
-        if(Acao && JogadorAlvo){
-            const response = Acao(Sala, JogadorOrigem.id, JogadorAlvo.id)
+        if(Acao && AlvoId){
+            const response = Acao(Sala, JogadorOrigem.id, AlvoId)
             if(response.erro){
                 return response
             }
@@ -63,7 +63,7 @@ exports.PerformarAção = (socket, jogador, codigo, JogadorAlvo = null) => {
 
         for(const j of Object.values(Sala.jogadores)){ //Checa se todos os jogadores estão prontos, se pelo menos um não tiver, ele retorna 
             if(j.estado.toUpperCase() != "PRONTO"){
-                return {ok: true, dados: {jogador, mensagem: jogador.nome + " performou ação com sucesso"}}
+                return {ok: true, dados: {jogador, mensagem: jogador.nome + " agiu com sucesso"}}
             }
         }
 
@@ -76,7 +76,7 @@ exports.PerformarAção = (socket, jogador, codigo, JogadorAlvo = null) => {
 }
 
 //processa votação do rebanho (quem vai ser expulso (mabel))
-exports.Votar = (socket, jogador, codigo, JogadorAlvo = null) => {
+exports.Votar = (socket, jogador, codigo, AlvoId = null) => {
     try{
         const Sala = SalaManager.Salas[codigo]
         if(!Sala){
@@ -98,15 +98,15 @@ exports.Votar = (socket, jogador, codigo, JogadorAlvo = null) => {
         
         let voto = {}
 
-        const Alvo = Sala.jogadores[JogadorAlvo.id]
+        const Alvo = Sala.jogadores[AlvoId]
 
         if(Alvo){ // Se tiver alvo, consta o voto
             if(Alvo.estado.toUpperCase() == "MORTO"){
-                return { erro: "Jogador Alvo " + JogadorAlvo.id + " está morto, morto não é votado"}
+                return { erro: "Jogador Alvo " + AlvoId + " está morto, morto não é votado"}
             }
             voto = {
                 de: jogador.id,
-                para: JogadorAlvo.id
+                para: AlvoId
             }
         }else{ // Se não tiver, o voto é nulo
             voto = {

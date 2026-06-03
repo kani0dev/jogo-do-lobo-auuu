@@ -23,6 +23,11 @@ module.exports = (io) => {
     
     
     io.on('connection', (socket) => {
+        if(!socket.jogador){
+            console.log("Jogador não autenticado tentou conectar ao socket");
+            socket.disconnect();
+            return;
+        }           
         console.log(socket.jogador.nome + ' conectado');
         socket.use((packet, next) => { // Middleware que checa o token do jogador após cada requisição do socket
             const token = socket.handshake.auth.token;
@@ -160,19 +165,17 @@ module.exports = (io) => {
         })
 
         socket.on("Acao", (codigo, alvo = null, callback) => {
-            const resposta = JogoService.PerformarAção(socket, socket.jogador, codigo, alvo)
+            const resposta = JogoService.Agir(socket, socket.jogador, codigo, alvo)
+            console.log(resposta)
             if(callback){
                 callback(resposta)
             }
             if(resposta.ok){
                 io.to(codigo+"_GERAL").emit("MaisUmPronto")
-                
+                if(resposta.dados.NovoEstado){
+                    io.to(codigo+"_GERAL").emit("MudouEstado", resposta)
+                }
             }
-            console.log(resposta)
-            if(resposta.dados.NovoEstado){
-                io.to(codigo+"_GERAL").emit("MudouEstado", resposta.dados.NovoEstado)
-            }
-            
             if(resposta.erro){
                 socket.emit("erro", resposta)
             }
@@ -194,6 +197,10 @@ module.exports = (io) => {
         })
 
         socket.on("disconnect", (reason) => {
+            if(!socket.jogador){
+                console.log("Jogador não autenticado desconectou do socket");
+                return;
+            }
             console.log(socket.jogador.nome + ' desconectado');
             if (reason === "ping timeout") {
                 console.log("Conexão perdida por inatividade");
