@@ -52,7 +52,7 @@ exports.PerformarAção = (socket, jogador, codigo, JogadorAlvo = null) => {
         }
 
         //Valida se o jogador tem uma função e um alvo
-        const Acao = ConstFuncoes[JogadorOrigem.funcao].acao
+        const Acao = ConstFuncoes.Funcoes[JogadorOrigem.funcao].acao
         if(Acao && JogadorAlvo){
             const response = Acao(Sala, JogadorOrigem.id, JogadorAlvo.id)
             if(response.erro){

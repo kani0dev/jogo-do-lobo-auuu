@@ -3,7 +3,6 @@ require('dotenv').config();
 
 const connectDB = async () => {
     try {
-        // await mongose.connect(mongodb://locahost:27017/jogo_lobitos)
         await mongoose.connect(process.env.MONGODB_URI,{
             user: process.env.DB_USER,
             pass: process.env.DB_PASS,

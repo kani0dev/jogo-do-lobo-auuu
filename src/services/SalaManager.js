@@ -3,7 +3,7 @@ const JogoStateMachine = require("./JogoStateMachine.js")
 
 exports.Salas = {}
 
-exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1}, {nome:"Ovelha", quantidade: 1}]}) => {
+exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1}, {nome:"Ovelha", quantidade: 1}, {nome:"São Bernardo", quantidade: 1}]}) => {
     try{
         // Muitissimas validações, lol
         const totalJogadores = config.funcoes.reduce((total, funcao) => total + funcao.quantidade, 0)

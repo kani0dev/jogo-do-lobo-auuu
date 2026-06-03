@@ -111,7 +111,7 @@ module.exports = (io) => {
                 };
             }
             const jogador = Sala.jogadores[socket.jogador.id]
-            callback({ ok: true, dados:{Sala: SalaTratada, Funcao: ConstFuncoes.Funcoes[jogador.funcao]}})
+            callback({ ok: true, dados:{Sala: SalaTratada, FuncaoDoJogador: ConstFuncoes.Funcoes[jogador.funcao]}})
         })
 
         // Lógica de sair da sala
@@ -147,7 +147,9 @@ module.exports = (io) => {
 
         socket.on("IniciarPartida", (codigo, callback) => {
             const resposta = SalaManager.ComecarJogo(socket, socket.jogador, codigo)
-            callback()
+            if(callback){
+                callback(resposta)
+            }
             if(resposta.ok){
                  io.to(codigo+"_GERAL").emit("PartidaIniciada", resposta.dados.Sala)
             }else{
@@ -157,28 +159,38 @@ module.exports = (io) => {
             }
         })
 
-        socket.on("Acao", (codigo, alvo = null) => {
+        socket.on("Acao", (codigo, alvo = null, callback) => {
             const resposta = JogoService.PerformarAção(socket, socket.jogador, codigo, alvo)
+            if(callback){
+                callback(resposta)
+            }
             if(resposta.ok){
                 io.to(codigo+"_GERAL").emit("MaisUmPronto")
-                socket.emit("PerformouAcao")
-            }else{
-                if(resposta.erro){
-                    socket.emit("erro", resposta)
-                }
+                
             }
+            console.log(resposta)
+            if(resposta.dados.NovoEstado){
+                io.to(codigo+"_GERAL").emit("MudouEstado", resposta.dados.NovoEstado)
+            }
+            
+            if(resposta.erro){
+                socket.emit("erro", resposta)
+            }
+            
         })
 
         socket.on("Votar", (codigo, alvo = null) => {
             const resposta = JogoService.Votar(socket,socket.jogador, codigo, alvo)
             if(resposta.ok){
                 io.to(codigo+"_GERAL").emit("MaisUmPronto")
-                socket.emit("Votou")
-            }else{
-                if(resposta.erro){
-                    socket.emit("erro", resposta)
-                }
             }
+            if(resposta.dados.NovoEstado){
+                io.to(codigo+"_GERAL").emit("MudouEstado", resposta.dados.NovoEstado)
+            }
+            if(resposta.erro){
+                socket.emit("erro", resposta)
+            }
+            
         })
 
         socket.on("disconnect", (reason) => {

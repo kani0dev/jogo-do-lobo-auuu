@@ -47,7 +47,7 @@ export function iniciarTelaLobby() {
     function reconectarOuEntrar() {
         socket.emit('ReconectarSala', codigoSala, (resposta) => {
             if (resposta.ok) {
-                renderizarLista(resposta.dados.Sala)
+                AtualizarSala(resposta.dados.Sala)
                 return
             }
 
@@ -58,7 +58,7 @@ export function iniciarTelaLobby() {
                         return
                     }
                 }
-                renderizarLista(respostaEntrar.dados.Sala)
+                AtualizarSala(respostaEntrar.dados.Sala)
             })
         })
     }
@@ -69,7 +69,7 @@ export function iniciarTelaLobby() {
         socket.once('connect', reconectarOuEntrar);
     }
 
-    function renderizarLista(sala) {
+    function AtualizarSala(sala) {
         if(sala.sala_estado.toUpperCase() != "ESPERANDO"){ //Se a partida ja comecou, ele manda o jogador pra pagina de jogo
             window.location.hash = "#jogo"
         }
@@ -104,8 +104,10 @@ export function iniciarTelaLobby() {
             
             const btnIniciar = document.getElementById('btn-iniciar-jogo');
             btnIniciar.addEventListener('click', () => {
-                socket.emit('IniciarPartida', sala.codigo, ()=>{
-                    window.location.hash = "#jogo"
+                socket.emit('IniciarPartida', sala.codigo, (resposta)=>{
+                    if(resposta.ok){
+                        window.location.hash = "#jogo"
+                    }
                 });
             });
         } else {
@@ -127,11 +129,11 @@ export function iniciarTelaLobby() {
     // O envio do evento para entrar na sala é tratado por reconectarOuEntrar()
 
     socket.on('EntrouNaSala', (sala, jogadorNovo) => {
-        renderizarLista(sala);
+        AtualizarSala(sala);
     });
 
     socket.on('SaiuDaSala', (sala, jogador) => {
-        renderizarLista(sala);
+        AtualizarSala(sala);
     });
 
     socket.on('PartidaIniciada', () => {
