@@ -90,7 +90,9 @@ window.addEventListener('hashchange', (event) => {
     const hashNova = new URL(event.newURL).hash;
     if(["#lobby", "#jogo"].includes(hashAnterior) && !["#lobby", "#jogo"].includes(hashNova)){
         console.log("saiu da sala")
-        socket.emit("SairSala")
+        socket.emit("SairSala", (resposta) => {
+            console.log(resposta)
+        })
         localStorage.removeItem('codigo_sala_lobitos');
     }
     roteadorSPA()

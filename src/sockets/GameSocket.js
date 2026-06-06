@@ -44,17 +44,20 @@ module.exports = (io) => {
         socket.emit('carregarJogador', socket.jogador, socket.codigoDaSala); // Manda as informações do jogador pro cliente pra ele mandar 
         
         // Lógica de criar sala
-        socket.on("CriarSala", (callback) => {
-            const resposta = SalaManager.CriarSala(socket, socket.jogador)
+        socket.on("CriarSala", async (callback) => {
+            const resposta = await SalaManager.CriarSala(socket, socket.jogador)
             callback(resposta)
+            if(resposta.ok){
+                io.emit("AtualizarSalas")
+            }
             if(resposta.erro){
                 socket.emit("erro", resposta)
             }
         });
 
         // Lógica de entrar na sala
-        socket.on("EntrarSala", (codigo, callback) => {
-            const resposta = SalaManager.EntrarSala(socket, socket.jogador, codigo)
+        socket.on("EntrarSala", async (codigo, callback) => {
+            const resposta = await SalaManager.EntrarSala(socket, socket.jogador, codigo)
             callback(resposta)
             if(resposta.ok){
                 socket.broadcast.to(codigo+"_GERAL").emit("EntrouNaSala", resposta.dados.Sala, resposta.dados.jogadorNovo)
@@ -69,26 +72,21 @@ module.exports = (io) => {
             }
         });
 
-        socket.on("ReconectarSala", (codigo, callback) => {
-            const resposta = SalaManager.ReconectarSala(socket, socket.jogador, codigo)
+        socket.on("ReconectarSala", async (codigo, callback) => {
+            const resposta = await SalaManager.ReconectarSala(socket, socket.jogador, codigo)
             callback(resposta)
             if(resposta.ok){
                 socket.codigoDaSala = codigo
-            } //else if(resposta.erro){
-            //     socket.emit("erro", resposta)
-            // }
+            }
         });
 
-        socket.on("ListarSalasPublicas", (callback) => {
-            const todasAsSalas = Object.values(SalaManager.Salas);
-            const salasPublicas = todasAsSalas.filter(sala => 
-                sala.privacidade.toUpperCase() === 'PUBLICO' && sala.sala_estado === 'ESPERANDO'
-            );
+        socket.on("ListarSalasPublicas", async (callback) => {
+            const salasPublicas = await SalaManager.listarSalasPublicas()
             callback({ ok: true, dados:{salas: salasPublicas}})
         });
 
-        socket.on("BuscarEstadoDaSala", (codigo, callback) => {
-            const Sala = SalaManager.Salas[codigo]
+        socket.on("BuscarEstadoDaSala", async (codigo, callback) => {
+            const Sala = await SalaManager.buscarSala(codigo)
             if(!Sala){
                  socket.emit("erro", {erro: "Sala com codigo "+codigo+" não encontrada"})
                  callback({erro: "Sala com codigo "+codigo+" não encontrada"})
@@ -98,12 +96,9 @@ module.exports = (io) => {
                 socket.emit("erro", {erro: socket.jogador.nome + " não encontrado na sala "+codigo})
                 return {erro: socket.jogador.nome + " não encontrado na sala "+codigo}
             }
-            // Usei o gemini, admito XP, mas aqui ele trata o objeto de sala a ser enviado 
-            // pra nn ter chance do usuario de alguma forma acessar essas informações e burlar o jogo
-            // 1. Tiramos 'jogadores' e 'votos' (e o que mais for secreto) e guardamos o resto em 'SalaTratada'
+
             const { jogadores, votos, ...SalaTratada } = Sala;
-            // 2. (Opcional) Se você quiser mandar a lista de jogadores, mas APENAS com informações públicas 
-            // (ex: só o nome e id, sem a função secreta de Lobisomem de cada um):
+
             SalaTratada.jogadores = {}
 
             for(id in Sala.jogadores){
@@ -112,35 +107,44 @@ module.exports = (io) => {
                     id: j.id,
                     nome: j.nome,
                     estado: j.estado,
-                    //funcao: j.id == socket.jogador.id ? j.funcao : null
                 };
             }
             const jogador = Sala.jogadores[socket.jogador.id]
-            callback({ ok: true, dados:{Sala: SalaTratada, FuncaoDoJogador: ConstFuncoes.Funcoes[jogador.funcao]}})
+            const Funcao = ConstFuncoes.Funcoes[jogador.funcao]
+            const FuncaoDoJogador = {
+                nome: Funcao.nome,
+                descricao: Funcao.descricao,
+                equipe: Funcao.equipe,
+                TemAcao: !!Funcao.acao
+            } 
+            callback({ ok: true, dados:{Sala: SalaTratada, FuncaoDoJogador}})
         })
 
         // Lógica de sair da sala
-        socket.on("SairSala", (callback) => {
+        socket.on("SairSala", async (callback) => {
             if(!socket.codigoDaSala){
                 return
             }
-            const resposta = SalaManager.SairSala(socket, socket.jogador, socket.codigoDaSala)
+            const resposta = await SalaManager.SairSala(socket, socket.jogador, socket.codigoDaSala)
             if(callback){
                 callback(resposta)
             }
             if(resposta.ok){
                 io.to(socket.codigoDaSala+"_GERAL").emit("SaiuDaSala", resposta.dados.Sala, resposta.dados.jogador)
                 socket.codigoDaSala = null
+                if(!resposta.dados.Sala){
+                    io.emit("AtualizarSalas")
+                }
             }
             if(resposta.erro){
                 socket.emit("erro", resposta)
             }
         });
 
-        socket.on("MudarProntidão", (codigo, callback) => {
-            const resposta = SalaManager.MudarProntidao(socket, socket.jogador, codigo)
+        socket.on("MudarProntidão", async (codigo, callback) => {
+            const resposta = await SalaManager.MudarProntidao(socket, socket.jogador, codigo)
             if(callback){
-                callback(resposta.dados.Jogador)
+                callback(resposta.dados ? resposta.dados.Jogador : null)
             }
             if(resposta.ok){
                 io.to(codigo+"_GERAL").emit("AtualizaSala", resposta.dados.Sala)
@@ -150,8 +154,8 @@ module.exports = (io) => {
             }
         })
 
-        socket.on("IniciarPartida", (codigo, callback) => {
-            const resposta = SalaManager.ComecarJogo(socket, socket.jogador, codigo)
+        socket.on("IniciarPartida", async (codigo, callback) => {
+            const resposta = await SalaManager.ComecarJogo(socket, socket.jogador, codigo)
             if(callback){
                 callback(resposta)
             }
@@ -164,9 +168,20 @@ module.exports = (io) => {
             }
         })
 
-        socket.on("Acao", (codigo, alvo = null, callback) => {
-            const resposta = JogoService.Agir(socket, socket.jogador, codigo, alvo)
-            console.log(resposta)
+        socket.on("ListarJogadores", async (codigo, filtro = {}) => {
+            const Sala = await SalaManager.buscarSala(codigo)
+            if(!Sala){
+                 socket.emit("erro", {erro: "Sala com codigo "+codigo+" não encontrada"})
+                 return
+            }
+            if(!Sala.jogadores[socket.jogador.id]){
+                socket.emit("erro", {erro: socket.jogador.nome + " não encontrado na sala "+codigo})
+                return {erro: socket.jogador.nome + " não encontrado na sala "+codigo}
+            }
+        })
+
+        socket.on("Acao", async (codigo, alvo = null, callback) => {
+            const resposta = await JogoService.Agir(socket, socket.jogador, codigo, alvo)
             if(callback){
                 callback(resposta)
             }
@@ -182,12 +197,12 @@ module.exports = (io) => {
             
         })
 
-        socket.on("Votar", (codigo, alvo = null) => {
-            const resposta = JogoService.Votar(socket,socket.jogador, codigo, alvo)
+        socket.on("Votar", async (codigo, alvo = null) => {
+            const resposta = await JogoService.Votar(socket,socket.jogador, codigo, alvo)
             if(resposta.ok){
                 io.to(codigo+"_GERAL").emit("MaisUmPronto")
             }
-            if(resposta.dados.NovoEstado){
+            if(resposta.dados && resposta.dados.NovoEstado){
                 io.to(codigo+"_GERAL").emit("MudouEstado", resposta.dados.NovoEstado)
             }
             if(resposta.erro){

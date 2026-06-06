@@ -1,47 +1,56 @@
 const ConstFuncoes = require("../constants/ConstFuncoes.js")
 const JogoStateMachine = require("./JogoStateMachine.js")
+const { connectRedis, salvarSala, buscarSala, removerSala, listarSalas } = require("../database/redis")
 
-exports.Salas = {}
+connectRedis().catch(err => console.error("Redis connection failed:", err))
 
-exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1}, {nome:"São Bernardo", quantidade: 1}]}) => {
+// Exporta funções do Redis diretamente
+exports.salvarSala = salvarSala
+exports.buscarSala = buscarSala
+
+exports.listarSalasPublicas = async () => {
+    const salas = await listarSalas()
+    return salas.filter(sala => sala.privacidade.toUpperCase() === 'PUBLICO' && sala.sala_estado.toUpperCase() === 'ESPERANDO')
+}
+
+exports.CriarSala = async (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1}, {nome:"São Bernardo", quantidade: 1}]}) => {
     try{
-        // Muitissimas validações, lol
         const totalJogadores = config.funcoes.reduce((total, funcao) => total + funcao.quantidade, 0)
-        if(totalJogadores < 2 || totalJogadores > 20){// Valida a quantidade de jogadores
+        if(totalJogadores < 2 || totalJogadores > 20){
             console.log(jogador.nome + " tentou criar uma sala com um número de jogadores inválido: " + totalJogadores)
             return { erro: "Número de jogadores deve ser entre 2 e 20"}
         }
-        if(!["PUBLICO", "PRIVADO"].includes(config.privacidade.toUpperCase())){// Valida a privacidade
+        if(!["PUBLICO", "PRIVADO"].includes(config.privacidade.toUpperCase())){
             console.log(jogador.nome + " tentou criar uma sala com uma privacidade inválida: " + config.privacidade)
             return { erro: "Privacidade deve ser 'publico' ou 'privado'"}
         }
-        if(config.funcoes.length == 0){ // Valida a quantidade de funções
+        if(config.funcoes.length == 0){
             console.log(jogador.nome + " tentou criar uma sala sem funções")
             return { erro: "A sala deve ter pelo menos uma função"}
         }
-        for(const f of config.funcoes){ //Checa se a funcao inserida existe
+        for(const f of config.funcoes){
             if(!ConstFuncoes.Funcoes[f.nome]){
                 return { erro: "A funcao "+f.nome+", não é uma função reconhecida pelo jogo"}
             }
         }
-        if(config.funcoes.some(funcao => funcao.quantidade < 1)){ // Valida a quantidade de jogadores por função
+        if(config.funcoes.some(funcao => funcao.quantidade < 1)){
             console.log(jogador.nome + " tentou criar uma sala com uma função com quantidade menor que 1")
             return { erro: "Cada função deve ter pelo menos 1 jogador"}
         }
         
         const codigo = GerarCodigoAleatorio()
-        const Sala = exports.Salas[codigo] = {
-            codigo : codigo, 
+        const Sala = {
+            codigo : codigo,
             privacidade: config.privacidade,
             sala_estado: "ESPERANDO",
             quantidade_jogadores: totalJogadores,
             anfitriao: jogador.id,
             jogadores: {},
-            //espectadores:{},  
             funcoes: config.funcoes,
-            votos: []
+            votos: [],
+            chat: []
         }
-
+        await salvarSala(Sala)
         return {ok: true, dados:{ Sala, mensagem: "Sala com o codigo "+codigo+" criada com sucesso"}}
     }catch(erro){
         console.log("Erro ao criar a sala: " + erro)
@@ -50,14 +59,14 @@ exports.CriarSala = (socket, jogador, config = {privacidade: "PUBLICO", funcoes 
 }
 
 
-exports.EntrarSala = (socket, jogador, codigo) => {
+exports.EntrarSala = async (socket, jogador, codigo) => {
     try{
         if(socket.rooms.size > 1){
             console.log(socket.id + "tentou entrar em uma sala enquanto já estava em outra sala")
             return { erro: "Você já está em uma sala"}
         }
 
-        const Sala = exports.Salas[codigo]
+        const Sala = await buscarSala(codigo)
         if(!Sala){
             console.log(jogador.nome + " tentou entrar em uma sala inexistente")
             return { erro: "Sala " + codigo + " não encontrada"}
@@ -82,6 +91,7 @@ exports.EntrarSala = (socket, jogador, codigo) => {
             efeitos: []
         }
         socket.join(codigo + "_GERAL")
+        await salvarSala(Sala)
         return { ok: true, dados: { Sala, jogadorNovo ,mensagem: jogador.nome + " entrou na sala "+codigo+" com sucesso" } }
 
     }catch(erro){
@@ -90,9 +100,9 @@ exports.EntrarSala = (socket, jogador, codigo) => {
     }
 }
 
-exports.SairSala = (socket, jogador, codigo) => {
+exports.SairSala = async (socket, jogador, codigo) => {
     try{
-        const Sala = exports.Salas[codigo]
+        const Sala = await buscarSala(codigo)
         if(!Sala){
             console.log(jogador.nome + " tentou sair de uma sala inexistente")
             return { erro: "Sala " + codigo + " não encontrada"}
@@ -110,9 +120,10 @@ exports.SairSala = (socket, jogador, codigo) => {
         
 
         if(Object.keys(Sala.jogadores).length <= 0){
-            delete exports.Salas[codigo]
+            await removerSala(codigo)
             return { ok: true, dados:{Sala: false, jogador, message: jogador.nome + " saiu da sala "+codigo+" com sucesso"}}
         }else{
+            await salvarSala(Sala)
             return { ok: true, dados:{Sala, jogador,message: jogador.nome + " saiu da sala "+codigo+" com sucesso"} }
         }
     
@@ -123,9 +134,9 @@ exports.SairSala = (socket, jogador, codigo) => {
 
 }
 
-exports.ReconectarSala = (socket, jogador, codigo) => {
+exports.ReconectarSala = async (socket, jogador, codigo) => {
     try{
-        const Sala = exports.Salas[codigo]
+        const Sala = await buscarSala(codigo)
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
@@ -135,6 +146,7 @@ exports.ReconectarSala = (socket, jogador, codigo) => {
         }
         Jogador.socket_id = socket.id
         socket.join(codigo + "_GERAL")
+        await salvarSala(Sala)
         socket.to(codigo+"_GERAL").emit("Reconectou", Jogador)
         return {ok: true, dados: {Jogador, Sala}}
     }catch(erro){
@@ -142,9 +154,9 @@ exports.ReconectarSala = (socket, jogador, codigo) => {
     }
 }
 
-exports.MudarConfigSala = (socket, jogador, codigo, config = {}) => {
+exports.MudarConfigSala = async (socket, jogador, codigo, config = {}) => {
     try{
-        const Sala = exports.Salas[codigo]
+        const Sala = await buscarSala(codigo)
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
@@ -161,21 +173,21 @@ exports.MudarConfigSala = (socket, jogador, codigo, config = {}) => {
         
         for(const c in config){
             switch(c){
-                case privacidade:
+                case 'privacidade':
                     Sala.privacidade = config[c]
                     break;
-                case funcoes:
+                case 'funcoes':
                     const totalJogadores = config[c].reduce((total, funcao) => total + funcao.quantidade, 0)
-                    if(totalJogadores < 2 || totalJogadores > 20){// Valida a quantidade de jogadores
+                    if(totalJogadores < 2 || totalJogadores > 20){
                         console.log(jogador.nome + " tentou criar uma sala com um número de jogadores inválido: " + totalJogadores)
                         return { erro: "Número de jogadores deve ser entre 2 e 20"}
                     }
-                    for(const f of config[c]){//Checa se a funcao inserida existe
+                    for(const f of config[c]){
                         if(!ConstFuncoes.Funcoes[f.nome]){
                             return { erro: "A funcao "+f.nome+", não é uma função reconhecida pelo jogo"}
                         }
                     }
-                    if(config.funcoes.some(funcao => funcao.quantidade < 1)){ // Valida a quantidade de jogadores por função
+                    if(config.funcoes.some(funcao => funcao.quantidade < 1)){
                         console.log(jogador.nome + " tentou criar uma sala com uma função com quantidade menor que 1")
                         return { erro: "Cada função deve ter pelo menos 1 jogador"}
                     }
@@ -186,15 +198,16 @@ exports.MudarConfigSala = (socket, jogador, codigo, config = {}) => {
                     break;
             }
         }
+        await salvarSala(Sala)
         return { ok: true, dados: { Sala } }
     }catch(erro){
         return { erro }
     }
 }
 
-exports.MudarProntidao = (socket, jogador, codigo)=>{
+exports.MudarProntidao = async (socket, jogador, codigo)=>{
     try{
-        const Sala = exports.Salas[codigo]
+        const Sala = await buscarSala(codigo)
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
@@ -207,8 +220,8 @@ exports.MudarProntidao = (socket, jogador, codigo)=>{
             return {erro: "O jogo da sala "+codigo+" ja começou"}
         }
 
-        Jogador.estado = (Jogador.estado.toUpperCase() === "PRONTO") ? "NAO PRONTO" : "PRONTO" // Da um toggle no estado do jogador
-
+        Jogador.estado = (Jogador.estado.toUpperCase() === "PRONTO") ? "NAO PRONTO" : "PRONTO"
+        await salvarSala(Sala)
         return { ok: true, dados: { Jogador } }
     }catch(erro){
         console.log(erro)
@@ -216,9 +229,9 @@ exports.MudarProntidao = (socket, jogador, codigo)=>{
     }
 }
 
-exports.ComecarJogo = (socket, jogador, codigo)=>{
+exports.ComecarJogo = async (socket, jogador, codigo)=>{
     try{
-        const Sala = exports.Salas[codigo]
+        const Sala = await buscarSala(codigo)
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
@@ -243,8 +256,9 @@ exports.ComecarJogo = (socket, jogador, codigo)=>{
             }
         }
 
-        const IniciaJogo = JogoStateMachine.MudaEstadoDaSala(codigo)
+        const IniciaJogo = await JogoStateMachine.MudaEstadoDaSala(Sala)
         if(IniciaJogo.ok){
+            await salvarSala(Sala)
             return { ok: true, dados: {Sala} }
         }else{
             return IniciaJogo.erro 

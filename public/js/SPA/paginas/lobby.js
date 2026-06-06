@@ -107,13 +107,16 @@ export function iniciarTelaLobby() {
                 socket.emit('IniciarPartida', sala.codigo, (resposta)=>{
                     if(resposta.ok){
                         window.location.hash = "#jogo"
+                    }else{
+                        console.log(resposta)
                     }
                 });
             });
         } else {
+            const estadoAtual = sala.jogadores[socket.jogador.id].estado
             acoesContainer.innerHTML = `
                 <p class="texto-espera">Aguardando o anfitrião iniciar a partida...</p>
-                <button id="btn-pronto">NÃO PRONTO</button>
+                <button id="btn-pronto">${estadoAtual}</button>
             `;
             const btnPronto = document.getElementById('btn-pronto');
             if(btnPronto){

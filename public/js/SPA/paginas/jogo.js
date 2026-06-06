@@ -1,6 +1,5 @@
 import { socket } from '../renderPage.js';
 
-let chatlog = []
 let FuncaoAtual = {}
 
 export function TelaJogo() {
@@ -19,6 +18,12 @@ export function TelaJogo() {
                     <h2>Aguardando informações...</h2>
                 </div>
                 <button id="confirmar-acao">Confirmar</button>
+                <div id="painel-chat">
+                    <div id="chat-log">
+                    </div>
+                    <input id="chat-input" type="text">
+                    <button id="chat-enviar">Enviar</button>
+                </div>
             </section>
         </div>
     `;
@@ -44,92 +49,69 @@ export function iniciarTelaJogo() {
         socket.jogador = jogador
     })
 
-    socket.on("MaisUmPronto", () => {
-        console.log("mais um foi")
-    })
-
-    socket.on("MudouEstado", AtualizarSala)
-
-    function AtualizarSala(resposta){
+    socket.on("MudouEstado", (resposta) => {
         if(resposta.erro){
             window.location.hash = "#salas"
             return
         }
-        const Sala = resposta.dados.Sala
+        AtualizarSala(resposta.dados.Sala)
+    })
+    
+    socket.emit('BuscarEstadoDaSala', codigoSala, (resposta) => { // Evento emitido quando a pagina é carregada, ele atualiza a sala e salva a sua funcao na memoria
+        if(resposta.erro){
+            window.location.hash = "#salas"
+            return
+        }
+
+        const Funcao = resposta.dados.FuncaoDoJogador
+        if(Funcao){
+            document.getElementById("funcao").innerText = Funcao.nome
+            document.getElementById("funcao-descricao").innerText = Funcao.descricao
+            if(FuncaoAtual != Funcao){
+                FuncaoAtual = Funcao
+            }
+        }
+
+        AtualizarSala(resposta.dados.Sala)
+    })
+    
+    function AtualizarSala(Sala){
         if(Sala.sala_estado.toUpperCase() == "ESPERANDO"){
             window.location.hash = "#lobby"
             return
         }
         tituloCodigo.innerText = `Sala: ${Sala.codigo}`
         estadoSala.innerText = `--${Sala.sala_estado}--`
-
-        const Funcao = resposta.dados.FuncaoDoJogador
-        document.getElementById("funcao").innerText = Funcao.nome
-        document.getElementById("funcao-descricao").innerText = Funcao.descricao
-        if(FuncaoAtual != Funcao){
-            FuncaoAtual = Funcao
-        }
-
+        const opcoesAcao = document.getElementById('opcoes-acao')
+        opcoesAcao.innerHTML = ""
+        
         switch(Sala.sala_estado.toUpperCase()){
             case "NOITE":
-                RenderAcao(Sala, Funcao.nome)
+                if(FuncaoAtual.TemAcao){
+                    ListarJogadores(Sala)
+                }else{
+                    const opcoesAcao = document.getElementById('opcoes-acao')
+                    opcoesAcao.innerHTML = `<h4>Você é um(a) ${FuncaoAtual.nome}, ${FuncaoAtual.nome}s não podem agir durante a noite</h4>`
+                }
+                ConectarBtnConfirmar(Sala.codigo, "Acao")
                 break;
-            case "DIA":
+            case "DISCUSSÃO":
+                ListarJogadores(Sala)
+                ConectarBtnConfirmar(Sala.codigo, "Votar")
+                break;
             default:
                 console.log("Mudou prum estado que eu nn conheco")
                 break;
         }
     }
-
-    socket.emit('BuscarEstadoDaSala', codigoSala, AtualizarSala)
 }
 
-function RenderAcao(Sala, Funcao){
-    const opcoesAcao = document.getElementById('opcoes-acao')
-    switch(Funcao.toUpperCase()){
-        case "SÃO BERNARDO":
-        case "LOBO":
-            opcoesAcao.innerHTML = ""
-            for(const j of Object.values(Sala.jogadores)){
-                if(j.estado.toUpperCase() == "MORTO"){
-                    continue
-                }
-                let JogadorContainer = document.createElement("div")
-                
-                let JogadorRadio = document.createElement("input")
-                JogadorRadio.type = "radio"
-                JogadorRadio.name = "target"
-                JogadorRadio.value = `${j.id}`
-
-                let JogadorNome = document.createElement("h3")
-                JogadorNome.innerText = `${j.nome}`
-                
-                JogadorContainer.append(JogadorNome)
-                JogadorContainer.append(JogadorRadio)
-                opcoesAcao.appendChild(JogadorContainer)
-            }
-            break;
-        default:
-            opcoesAcao.innerHTML = `Você é uma ${Funcao}, ${Funcao}s não podem fazer nada durante a noite`
-            break;
-    }
-
-    const confirmarAcao = document.getElementById('confirmar-acao')
-    confirmarAcao.disabled = false
-    confirmarAcao.addEventListener("click", () => {
-        const AlvoId = document.querySelector('input[name="target"]:checked').value
-        socket.emit("Acao", Sala.codigo, AlvoId? AlvoId: null, (resposta)=>{
-            console.log(resposta)
-            confirmarAcao.disabled = true
-        })
-    })
-}
-
-function RenderVotacao(Sala){
+function ListarJogadores(Sala){
     const opcoesAcao = document.getElementById('opcoes-acao')
     opcoesAcao.innerHTML = ""
+
     for(const j of Object.values(Sala.jogadores)){
-        if(j.estado.toUpperCase() == "MORTO"){
+        if(j.estado.toUpperCase() == "MORTO" || j.id == socket.jogador.id){ //ignora se a pessoa esta morta ou se a pessoa é voce
             continue
         }
         let JogadorContainer = document.createElement("div")
@@ -138,6 +120,7 @@ function RenderVotacao(Sala){
         JogadorRadio.type = "radio"
         JogadorRadio.name = "target"
         JogadorRadio.value = `${j.id}`
+
         let JogadorNome = document.createElement("h3")
         JogadorNome.innerText = `${j.nome}`
         
@@ -145,16 +128,29 @@ function RenderVotacao(Sala){
         JogadorContainer.append(JogadorRadio)
         opcoesAcao.appendChild(JogadorContainer)
     }
+    opcoesAcao.querySelector('input').checked = true
+}
+
+function ConectarBtnConfirmar(codigo, Evento){
     const confirmarAcao = document.getElementById('confirmar-acao')
     confirmarAcao.disabled = false
     confirmarAcao.addEventListener("click", () => {
-        const alvo = document.querySelector('input[name="target"]:checked')
-        socket.emit("Votar", Sala.codigo, alvo? alvo: null, (resposta)=>{
+        const inputField = document.querySelector('input[name="target"]:checked')
+        let AlvoId = null
+        if(inputField){
+            AlvoId = inputField.value
+        }
+        socket.emit(Evento, codigo, AlvoId, (resposta)=>{
             if(resposta.erro){
-                console.log(resposta.erro)
+                console.log(resposta)
                 return
             }
             confirmarAcao.disabled = true
         })
     })
+}
+
+function MostrarChat(){
+    const painelChat = document.getElementById("painel-chat")
+    const chatLog = document.createElement("div")
 }

@@ -5,6 +5,9 @@ oq acontece quando um player sai no meio da partida?
 
 //TODO: arrumar as páginas do front certinho, adicionar css, mudar layout e etc
 
+----public/js/SPA/paginas/jogo.js----
+//TODO: ajustar a listagem dos jogadores pra exibir as pessoas certas de acorsdo com seu papel, por enquanto o cachorro nn pode escolher ele msm
+
 ---src/sockets/GameSocket.js----
 
 //TODO: Mandar as requisições pro controller e não direto daqui pros services

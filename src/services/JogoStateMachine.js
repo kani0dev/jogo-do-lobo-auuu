@@ -5,17 +5,12 @@ const ConstFuncoes = require("../constants/ConstFuncoes")
 
 // Esse arquivo é quem vai controlar os estados da sala, um chamado "Maquina de estados" ou "StateMachine"
 
-exports.MudaEstadoDaSala = (codigo) => {
+exports.MudaEstadoDaSala = (Sala) => {
     try{ 
-        const Sala = SalaManager.Salas[codigo]
-        if(!Sala){
-            return {erro: "Sala "+codigo+", não existe"}
-        }
-        //Ele verifica o estado atual da sala, faz as coisas que tem que fazer, e logo muda o estado
         switch(Sala.sala_estado.toUpperCase()){
             case "ESPERANDO":
                 Sala.sala_estado = "NOITE"
-                JogoService.DistribuirPapeis(codigo)
+                JogoService.DistribuirPapeis(Sala)
                 break;
             case "NOITE":
                 for(const j of Object.values(Sala.jogadores)){
@@ -29,11 +24,12 @@ exports.MudaEstadoDaSala = (codigo) => {
                 Sala.sala_estado = "DISCUSSÃO"
                 break;
             case "DISCUSSÃO": 
+                Sala.chat = []
                 Sala.sala_estado = "DIA"
                 break;
             case "DIA":
-                var resposta = ProcessarVotos(codigo)
-                if(resposta.dados.jogador){
+                var resposta = ProcessarVotos(Sala)
+                if(resposta.dados && resposta.dados.jogador){
                     resposta.dados.jogador.estado = "MORTO"
                 }
                 Sala.sala_estado = "NOITE"
@@ -55,19 +51,15 @@ exports.MudaEstadoDaSala = (codigo) => {
             }
             j.estado = "NAO PRONTO"
         }
-        return {ok: true, dados: {Sala, NovoEstado: Sala.sala_estado, mensagem: "Sala "+codigo+" mudou o estado para: "+Sala.sala_estado}}
+        return {ok: true, dados: {Sala, NovoEstado: Sala.sala_estado, mensagem: "Sala "+Sala.codigo+" mudou o estado para: "+Sala.sala_estado}}
     }catch(erro){
         return { erro }
     }
 }
 
-const ProcessarVotos = (codigo) => {
+const ProcessarVotos = (Sala) => {
     try{
         let contagemVotos = {}
-        const Sala = SalaManager.Salas[codigo]
-        if(!Sala){
-            return {erro: "Sala "+codigo+", não existe"}
-        }
         Sala.votos.forEach((voto)=>{
             if(!contagemVotos[voto.para]){
                 contagemVotos[voto.para] = 0
@@ -96,12 +88,8 @@ const ProcessarVotos = (codigo) => {
     }
 }
 
-const ChecaFimDoJogo = (codigo) => {
+const ChecaFimDoJogo = (Sala) => {
     try{
-        const Sala = SalaManager.Salas[codigo]
-        if(!Sala){
-            return {erro: "Sala "+codigo+", não existe"}
-        }
         let jogoAcabou = true
         let equipeVencedora = ""
         for(const j of Object.values(Sala.jogadores)){

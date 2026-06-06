@@ -41,6 +41,12 @@ export async function iniciarTelaSalas() {
         }
     });
 
+    socket.on("AtualizarSalas", () => {
+        socket.emit("ListarSalasPublicas", (resposta) => {
+            AtualizarLista(resposta.dados.salas)
+        })
+    })
+
     if (nomeDisplay && socket.jogador){
         nomeDisplay.textContent = `Olá, ${socket.jogador.nome}`;
     }
@@ -63,7 +69,7 @@ export async function iniciarTelaSalas() {
             cardSala.innerHTML = `
                 <div>
                     <span class="codigo-sala">#${sala.codigo}</span>
-                    <span class="jogadores-sala">${sala.quantidade_jogadores}/${sala.quantidade_jogadores} jogadores</span>
+                    <span class="jogadores-sala">${Object.keys(sala.jogadores).length}/${sala.quantidade_jogadores} jogadores</span>
                 </div>
                 <button class="btn-entrar-sala" data-codigo="${sala.codigo}">Entrar</button>
             `;

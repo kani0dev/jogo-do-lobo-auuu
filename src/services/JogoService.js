@@ -3,12 +3,8 @@ const ConstFuncoes = require("../constants/ConstFuncoes")
 const JogoStateMachine = require("./JogoStateMachine")
 
 // distribuição de papeis no inicio do jogo
-exports.DistribuirPapeis = (codigo) => {
+exports.DistribuirPapeis = (Sala) => {
     try{
-        const Sala = SalaManager.Salas[codigo]
-        if(!Sala){
-            return {erro: "Sala "+codigo+", não existe"}
-        }
         const JogoNaoComecou = Sala.sala_estado.toUpperCase() == "ESPERANDO" 
         if(JogoNaoComecou){
             return {erro: "O jogo da sala "+codigo+" ainda não começou"}
@@ -31,10 +27,10 @@ exports.DistribuirPapeis = (codigo) => {
     }
 }
 
-exports.Agir = (socket, jogador, codigo, AlvoId = null) => {
+exports.Agir = async (socket, jogador, codigo, AlvoId = null) => {
     try{
         //Validações da sala
-        const Sala = SalaManager.Salas[codigo]
+        const Sala = await SalaManager.buscarSala(codigo)
         if(!Sala){
             return { erro: "Sala "+codigo+", não existe" }
         }
@@ -52,14 +48,23 @@ exports.Agir = (socket, jogador, codigo, AlvoId = null) => {
         }
 
         //Valida se o jogador tem uma função e um alvo
-        const Acao = ConstFuncoes.Funcoes[JogadorOrigem.funcao].acao
-        if(Acao && AlvoId){
+        const Funcao = ConstFuncoes.Funcoes[JogadorOrigem.funcao]
+        if(!Funcao){
+            return { erro: `Função '${JogadorOrigem.funcao}' não encontrada` }
+        }
+        const Acao = Funcao.acao
+
+        if(Acao){
+            if(!AlvoId){
+                return { erro: `Ação de '${JogadorOrigem.funcao}' precisa de um alvo` }
+            }
             const response = Acao(Sala, JogadorOrigem.id, AlvoId)
             if(response.erro){
                 return response
             }
         }
         JogadorOrigem.estado = "PRONTO"
+        await SalaManager.salvarSala(Sala)
 
         for(const j of Object.values(Sala.jogadores)){ //Checa se todos os jogadores estão prontos, se pelo menos um não tiver, ele retorna 
             if(j.estado.toUpperCase() != "PRONTO"){
@@ -68,6 +73,9 @@ exports.Agir = (socket, jogador, codigo, AlvoId = null) => {
         }
 
         const resposta = JogoStateMachine.MudaEstadoDaSala(codigo)
+        if(resposta.ok){
+            await SalaManager.salvarSala(Sala)
+        }
         return resposta
         
     }catch(erro){
@@ -76,9 +84,9 @@ exports.Agir = (socket, jogador, codigo, AlvoId = null) => {
 }
 
 //processa votação do rebanho (quem vai ser expulso (mabel))
-exports.Votar = (socket, jogador, codigo, AlvoId = null) => {
+exports.Votar = async (socket, jogador, codigo, AlvoId = null) => {
     try{
-        const Sala = SalaManager.Salas[codigo]
+        const Sala = await SalaManager.buscarSala(codigo)
         if(!Sala){
             return {erro: "Sala "+codigo+", não existe"}
         }
@@ -117,12 +125,16 @@ exports.Votar = (socket, jogador, codigo, AlvoId = null) => {
         
         Sala.votos.push(voto)
         Eleitor.estado = "PRONTO"
+        await SalaManager.salvarSala(Sala)
         for(const j of Object.values(Sala.jogadores)){ //Checa se todos os jogadores estão prontos, se pelo menos um não tiver, ele retorna 
             if(j.estado.toUpperCase() != "PRONTO"){
                 return {ok: true}
             }
         }
-        const resposta = JogoStateMachine.MudaEstadoDaSala(codigo)
+        const resposta = await JogoStateMachine.MudaEstadoDaSala(codigo)
+        if(resposta.ok){
+            await SalaManager.salvarSala(Sala)
+        }
         return resposta
 
     }catch(erro){
