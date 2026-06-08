@@ -4,27 +4,35 @@ import { socket } from '../renderPage.js';
 
 export function TelaSalas() {
     return `
-        <div>
-            <button id="btn-deslogar">
-                Sair
-            </button>
-            <h2 id="nome-display">Olá, ------</h2>
-            <h2>Salas Públicas</h2>
-            <p>Escolha uma sala para entrar ou crie a sua própria.</p>
-            
-            <button id="btn-criar-sala">
-                + Criar Nova Sala
-            </button>
+    <div class="salas-container">
+        <header class="salas-header">
+            <div class="user-info">
+                <span class="user-avatar">🐺</span>
+                <h2 id="nome-display">Olá, ------</h2>
+            </div>
+            <button id="btn-deslogar" class="btn-sair">Sair</button>
+        </header>
 
-            <div id="lista-salas">
-                <p>Buscando salas disponíveis...</p>
+        <main class="salas-content">
+            <div class="content-header">
+                <div>
+                    <h1 class="content-title">Salas Públicas</h1>
+                    <p class="content-subtitle">Escolha uma sala para entrar ou crie a sua própria para jogar.</p>
+                </div>
+                <button id="btn-criar-sala" class="btn-primary">+ Criar Nova Sala</button>
             </div>
 
-            <div>
-                <button id="btn-atualizar-salas">Atualizar</button>
+            <div class="rooms-list-wrapper">
+                <div id="lista-salas" class="rooms-grid">
+                    <p class="carregando">Buscando salas disponíveis...</p>
+                </div>
             </div>
 
-        </div>
+            <div class="salas-footer">
+                <button id="btn-atualizar-salas" class="btn-secondary">Atualizar Lista</button>
+            </div>
+        </main>
+    </div>
     `;
 }
 
@@ -34,15 +42,16 @@ export async function iniciarTelaSalas() {
     const btnCriarSala = document.getElementById('btn-criar-sala');
     const nomeDisplay = document.getElementById('nome-display');
     const btnDeslogar = document.getElementById('btn-deslogar');
-    socket.once('carregarJogador', (jogador) => { //chamado uma vez que vc tenta reconectar (dar f5 na pagina por exemplo)
+    
+    socket.once('carregarJogador', (jogador) => { 
         socket.jogador = jogador
         if (nomeDisplay) {
-            nomeDisplay.textContent = `Olá, ${socket.jogador.nome}`;
+            nomeDisplay.innerHTML = `Olá, <span class="highlight-name">${socket.jogador.nome}</span>`;
         }
     });
 
     if (nomeDisplay && socket.jogador){
-        nomeDisplay.textContent = `Olá, ${socket.jogador.nome}`;
+        nomeDisplay.innerHTML = `Olá, <span class="highlight-name">${socket.jogador.nome}</span>`;
     }
 
     socket.emit("ListarSalasPublicas", (resposta) => {
@@ -54,21 +63,29 @@ export async function iniciarTelaSalas() {
         listaSalasContainer.innerHTML = '';
         
         if(salas.length < 1){
-            listaSalasContainer.innerHTML = '<p>Nenhuma sala publica encontrada</p>';
+            listaSalasContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🗺️</div>
+                    <h3>Nenhuma sala pública encontrada</h3>
+                    <p>Que tal criar uma sala nova agora mesmo?</p>
+                </div>
+            `;
             return
         }
 
         salas.forEach(sala => {
             const cardSala = document.createElement('div');
+            cardSala.className = 'room-card'; // Nova classe para estilizar os cartões de sala
             cardSala.innerHTML = `
-                <div>
+                <div class="room-details">
                     <span class="codigo-sala">#${sala.codigo}</span>
-                    <span class="jogadores-sala">${sala.quantidade_jogadores}/${sala.quantidade_jogadores} jogadores</span>
+                    <span class="jogadores-sala">👤 ${sala.quantidade_jogadores}/${sala.quantidade_jogadores} jogadores</span>
                 </div>
                 <button class="btn-entrar-sala" data-codigo="${sala.codigo}">Entrar</button>
             `;
             listaSalasContainer.appendChild(cardSala);
         });
+        
         const botoesEntrar = document.querySelectorAll('.btn-entrar-sala');
         botoesEntrar.forEach(botao => {
             botao.addEventListener('click', () => {
@@ -104,7 +121,7 @@ export async function iniciarTelaSalas() {
         })
     }
 
-    if(btnDeslogar){ //TODO: mudar esse botão pra ele se manter em outras páginas
+    if(btnDeslogar){ 
         btnDeslogar.addEventListener("click", ()=> {
             socket.manualDisconnect = true;
             socket.disconnect()
@@ -113,5 +130,4 @@ export async function iniciarTelaSalas() {
             window.location.hash = "#login"
         })
     }
-
 }

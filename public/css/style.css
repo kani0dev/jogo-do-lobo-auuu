@@ -136,3 +136,454 @@ body {
 .btn-login:active {
     transform: scale(0.98); /* Efeito físico de clique */
 }
+
+/* ==========================================================================
+   TELA DE SALAS PÚBLICAS
+   ========================================================================== */
+.salas-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #0b0f19;
+}
+
+/* Header Superior */
+.salas-header {
+    width: 100%;
+    background-color: #1e293b;
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar {
+    font-size: 1.4rem;
+    background-color: #0f172a;
+    padding: 6px;
+    border-radius: 50%;
+    border: 1px solid #334155;
+}
+
+#nome-display {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.highlight-name {
+    color: #f43f5e; /* Vermelho Lobitos */
+    font-weight: 700;
+}
+
+/* Conteúdo Principal */
+.salas-content {
+    flex: 1;
+    padding: 40px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto; /* Permite rolagem se houver muitas salas */
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.content-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.content-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+/* Área de Listagem e Grid de Salas */
+.rooms-list-wrapper {
+    flex: 1;
+    background-color: #1e293b;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 30px;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+.rooms-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Grade automática responsiva */
+    gap: 20px;
+}
+
+/* Estilo do Card Individual de Sala (Criado via JS) */
+.room-card {
+    background-color: #0f172a;
+    border: 2px solid #334155;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.room-card:hover {
+    transform: translateY(-2px);
+    border-color: #f43f5e;
+}
+
+.room-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.codigo-sala {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: 1px;
+}
+
+.jogadores-sala {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+/* Estado Vazio, Carregando e Texto */
+.empty-state {
+    grid-column: 1 / -1; /* Ocupa a largura inteira da grade */
+    text-align: center;
+    margin: auto;
+    padding: 20px;
+}
+
+.empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.carregando {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #64748b;
+    font-style: italic;
+    font-size: 1rem;
+}
+
+/* Rodapé */
+.salas-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Botões Customizados */
+.btn-primary {
+    background-color: #f43f5e;
+    color: #ffffff;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: #e11d48;
+}
+
+.btn-secondary {
+    background-color: #334155;
+    color: #cbd5e1;
+    padding: 10px 20px;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background-color: #475569;
+    color: #ffffff;
+}
+
+.btn-sair {
+    background-color: transparent;
+    color: #94a3b8;
+    border: 1px solid #475569;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-sair:hover {
+    background-color: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+    border-color: #f43f5e;
+}
+
+.btn-entrar-sala {
+    width: 100%;
+    background-color: #38bdf8; /* Azul brilhante para destacar o botão de entrar na sala */
+    color: #0f172a;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-entrar-sala:hover {
+    background-color: #0ea5e9;
+}
+
+.btn-primary:active, .btn-secondary:active, .btn-sair:active, .btn-entrar-sala:active {
+    transform: scale(0.98);
+}
+
+/* ==========================================================================
+   TELA DE LOBBY (Sala de Espera)
+   ========================================================================== */
+.lobby-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #0b0f19;
+}
+
+/* 1. Header do Lobby */
+.lobby-header {
+    width: 100%;
+    background-color: #1e293b;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+.lobby-title-wrapper h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.highlight-code {
+    color: #f43f5e; /* Vermelho Lobitos */
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.lobby-subtitle {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.badge-vagas {
+    background-color: #0f172a;
+    border: 2px solid #334155;
+    color: #cbd5e1;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* 2. Conteúdo Central e Grade de Jogadores */
+.lobby-content {
+    flex: 1;
+    padding: 40px;
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.players-card {
+    background-color: #1e293b;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 30px;
+    flex: 1;
+}
+
+.players-card h3 {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Grid onde entram as divs criadas pelo JS */
+.players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+/* Estilo do bloco de cada Jogador gerado pelo JS loop */
+.players-grid > div {
+    background-color: #0f172a;
+    border: 2px solid #334155;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    position: relative;
+    transition: border-color 0.2s ease;
+}
+
+/* Identificando o seu avatar-jogador */
+.avatar-jogador {
+    width: 60px;
+    height: 60px;
+    background-color: #1e293b;
+    border-radius: 50%;
+    border: 3px solid #475569;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.avatar-jogador::before {
+    content: '👤';
+    font-size: 1.8rem;
+}
+
+/* Caso seja o Líder da sala (dono) */
+.avatar-jogador.dono {
+    border-color: #fbbf24; /* Borda Dourada */
+    background-color: #292524;
+}
+
+.avatar-jogador.dono::before {
+    content: '👑'; /* Troca para coroa se for dono */
+}
+
+.nome-jogador {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.badge-dono {
+    background-color: rgba(251, 191, 36, 0.1);
+    border: 1px solid #fbbf24;
+    color: #fbbf24;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+/* 3. Rodapé do Lobby e Ações */
+.lobby-footer {
+    background-color: #1e293b;
+    padding: 24px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.actions-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.texto-espera {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+/* 4. Botões do Lobby */
+.btn-ready, #btn-iniciar-jogo {
+    background-color: #10b981; /* Verde Sucesso para Pronto/Iniciar */
+    color: #ffffff;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+}
+
+.btn-ready:hover, #btn-iniciar-jogo:hover {
+    background-color: #059669;
+}
+
+/* Caso o botão mude de texto para "PRONTO" ou ações do anfitrião */
+#btn-iniciar-jogo {
+    background-color: #f43f5e; /* Vermelho para o anfitrião iniciar direto */
+    box-shadow: 0 4px 10px rgba(244, 63, 94, 0.2);
+}
+#btn-iniciar-jogo:hover {
+    background-color: #e11d48;
+}
+
+.btn-sair-lobby {
+    background-color: transparent;
+    color: #94a3b8;
+    border: 1px solid #475569;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-sair-lobby:hover {
+    background-color: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+    border-color: #f43f5e;
+}
+
+.btn-ready:active, #btn-iniciar-jogo:active, .btn-sair-lobby:active {
+    transform: scale(0.98);
+}

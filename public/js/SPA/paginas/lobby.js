@@ -3,27 +3,31 @@ import { socket } from '../renderPage.js';
 
 export function TelaLobby() {
     return `
-        <div>
-            <header>
-                <h2>Sala: <span id="codigo-sala-titulo">------</span></h2>
-                <span id="status-vagas">0/0 Jogadores</span>
-            </header>
-            
-            <p>Aguardando na fila de prontidão...</p>
-
-            
-            <div id="lista-jogadores">
+    <div class="lobby-container">
+        <header class="lobby-header">
+            <div class="lobby-title-wrapper">
+                <h2>Sala: <span id="codigo-sala-titulo" class="highlight-code">------</span></h2>
+                <p class="lobby-subtitle">Aguardando na fila de prontidão...</p>
             </div>
+            <span id="status-vagas" class="badge-vagas">0/0 Jogadores</span>
+        </header>
+        
+        <main class="lobby-content">
+            <div class="players-card">
+                <h3>Jogadores na Sala</h3>
+                <div id="lista-jogadores" class="players-grid">
+                    </div>
+            </div>
+        </main>
 
-            <div id="acoes-lobby">
+        <footer class="lobby-footer">
+            <button id="btn-sair-sala" class="btn-sair-lobby">Sair da Sala</button>
+            <div id="acoes-lobby" class="actions-wrapper">
                 <p class="texto-espera">Aguardando o anfitrião iniciar a partida...</p>
-                <button id="btn-pronto">ficar pronto</button>
+                <button id="btn-pronto" class="btn-ready">Ficar Pronto</button>
             </div>
-
-            <button id="btn-sair-sala">
-                Sair da Sala
-            </button>
-        </div>
+        </footer>
+    </div>
     `;
 }
 

@@ -1,21 +1,43 @@
+// js/paginas/login.js
 import { socket } from '../renderPage.js';
 
 export function TelaLogin() {
     return `
-        <div>
-            <h2>Entrar no Lobitos</h2>
-            <input type="text" id="nome-jogador" placeholder="Digite seu nome de usuário"/>
-            <input type="password" id="senha-jogador" placeholder="Digite sua senha"/>
-            <button id="btn-logar">Entrar no Jogo</button>
-            <input type="text" id="nome-convidado" placeholder="Digite seu nome de usuário"/>
-            <button id="btn-convidado">Entrar como convidado</button>
+    <div class="login-container">
+        <div class="login-card">
+            <h1 class="login-title">Lobitos</h1>
+            <p class="login-subtitle">Escolha como deseja se conectar para jogar</p>
+            
+            <form class="login-form" id="form-login" onsubmit="event.preventDefault();">
+                
+                <div class="input-group">
+                    <label for="nome-jogador">Nome de Usuário</label>
+                    <input type="text" id="nome-jogador" placeholder="Digite seu nome de usuário"/>
+                </div>
+                
+                <div class="input-group">
+                    <label for="senha-jogador">Senha</label>
+                    <input type="password" id="senha-jogador" placeholder="Digite sua senha"/>
+                </div>
+                
+                <button type="button" class="btn-login" id="btn-logar">Entrar no Jogo</button>
+                
+                <div class="separator"></div>
+
+                <div class="input-group">
+                    <input type="text" id="nome-convidado" placeholder="Digite seu apelido de convidado"/>
+                </div>
+                
+                <button type="button" class="btn-login" id="btn-convidado">Entrar como convidado</button>
+            </form>
         </div>
+    </div>
     `;
 }
 
 export function iniciarTelaLogin() {
     socket.once('carregarJogador', (jogador) => {
-        socket.jogador = jogador
+        socket.jogador = jogador;
         window.location.hash = '#salas';
     });
 
@@ -23,15 +45,16 @@ export function iniciarTelaLogin() {
     if(tokenSalvo){
         if(!socket.connected){
             socket.auth = {
-                token: tokenSalvo // Passa o token aqui dentro do objeto auth
+                token: tokenSalvo 
             };
             socket.connect();
         }else{
             window.location.hash = '#salas';
         }
-        return
+        return;
     }
 
+    // BOTÃO LOGAR REGULAR
     const btnLogar = document.getElementById('btn-logar');
     if(btnLogar){
         btnLogar.addEventListener('click', async () => {
@@ -58,12 +81,10 @@ export function iniciarTelaLogin() {
 
                 const data = await response.json();
 
-
                 if (response.ok && data.token) {
-                    // SALVA NO LOCALSTORAGE DO NAVEGADOR
                     localStorage.setItem('token_lobitos', data.token);
                     socket.auth = {
-                        token: data.token // Passa o token aqui dentro do objeto auth
+                        token: data.token 
                     };
                     socket.connect();
                 } else {
@@ -75,6 +96,7 @@ export function iniciarTelaLogin() {
         });
     }
 
+    // BOTÃO ENTRAR COMO CONVIDADO
     const btnConvidado = document.getElementById('btn-convidado');
     if(btnConvidado){
         btnConvidado.addEventListener("click", async ()=>{
@@ -95,7 +117,7 @@ export function iniciarTelaLogin() {
                 if (response.ok && data.token) {
                     localStorage.setItem('token_lobitos', data.token);
                     socket.auth = {
-                        token: data.token // Passa o token aqui dentro do objeto auth
+                        token: data.token 
                     };
                     socket.connect();
                 } else {
@@ -104,8 +126,7 @@ export function iniciarTelaLogin() {
             } catch (err) {
                 console.error('Erro ao conectar:', err);
             }
-        })
+        });
     }
-
 }
 
