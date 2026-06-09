@@ -52,14 +52,6 @@ async function listarSalas() {
     return Object.values(raw).map(JSON.parse)
 }
 
-//* Chat
-async function salvarMensagem(codigo, mensagem){
-    if (!redis.isOpen) {
-        await connectRedis()
-    }
-    await redis.hSet(SALAS_KEY, codigo, JSON.stringify(sala))
-}
-
 module.exports = {
     connectRedis,
     salvarSala,

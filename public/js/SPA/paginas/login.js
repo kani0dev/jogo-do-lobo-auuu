@@ -9,6 +9,7 @@ export function TelaLogin() {
             <button id="btn-logar">Entrar no Jogo</button>
             <input type="text" id="nome-convidado" placeholder="Digite seu nome de usuário"/>
             <button id="btn-convidado">Entrar como convidado</button>
+            <a href="#cadastro">Criar uma conta</a>
         </div>
     `;
 }

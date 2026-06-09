@@ -10,7 +10,11 @@ exports.buscarSala = buscarSala
 
 exports.listarSalasPublicas = async () => {
     const salas = await listarSalas()
-    return salas.filter(sala => sala.privacidade.toUpperCase() === 'PUBLICO' && sala.sala_estado.toUpperCase() === 'ESPERANDO')
+    return salas.filter(sala => 
+        sala.privacidade.toUpperCase() === 'PUBLICO' 
+        && sala.sala_estado.toUpperCase() === 'ESPERANDO'
+        && Object.keys(sala.jogadores).length != sala.quantidade_jogadores 
+    )
 }
 
 exports.CriarSala = async (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1}, {nome:"São Bernardo", quantidade: 1}]}) => {
@@ -48,7 +52,8 @@ exports.CriarSala = async (socket, jogador, config = {privacidade: "PUBLICO", fu
             jogadores: {},
             funcoes: config.funcoes,
             votos: [],
-            chat: []
+            chat: [],
+            turno: 0
         }
         await salvarSala(Sala)
         return {ok: true, dados:{ Sala, mensagem: "Sala com o codigo "+codigo+" criada com sucesso"}}
@@ -256,7 +261,7 @@ exports.ComecarJogo = async (socket, jogador, codigo)=>{
             }
         }
 
-        const IniciaJogo = await JogoStateMachine.MudaEstadoDaSala(Sala)
+        const IniciaJogo = await JogoStateMachine.AvancaEstadoDaSala(Sala)
         if(IniciaJogo.ok){
             await salvarSala(Sala)
             return { ok: true, dados: {Sala} }

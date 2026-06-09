@@ -71,6 +71,8 @@ export function iniciarTelaLobby() {
 
     function AtualizarSala(sala) {
         if(sala.sala_estado.toUpperCase() != "ESPERANDO"){ //Se a partida ja comecou, ele manda o jogador pra pagina de jogo
+            socket.off("EntrouNaSala")
+            socket.off("SaiuDaSala")
             window.location.hash = "#jogo"
         }
         
@@ -104,8 +106,10 @@ export function iniciarTelaLobby() {
             
             const btnIniciar = document.getElementById('btn-iniciar-jogo');
             btnIniciar.addEventListener('click', () => {
-                socket.emit('IniciarPartida', sala.codigo, (resposta)=>{
+                socket.emit('IniciarPartida', (resposta)=>{
                     if(resposta.ok){
+                        socket.off("EntrouNaSala")
+                        socket.off("SaiuDaSala")
                         window.location.hash = "#jogo"
                     }else{
                         console.log(resposta)
@@ -121,7 +125,7 @@ export function iniciarTelaLobby() {
             const btnPronto = document.getElementById('btn-pronto');
             if(btnPronto){
                 btnPronto.addEventListener('click', () => {
-                    socket.emit("MudarProntidão", sala.codigo,(jogador)=>{
+                    socket.emit("MudarProntidão",(jogador)=>{
                         btnPronto.innerText = jogador.estado
                     })
                 });
@@ -139,13 +143,17 @@ export function iniciarTelaLobby() {
         AtualizarSala(sala);
     });
 
-    socket.on('PartidaIniciada', () => {
+    socket.once('PartidaIniciada', () => {
+        socket.off("EntrouNaSala")
+        socket.off("SaiuDaSala")
         window.location.hash = '#jogo';
     });
 
     const btnSair = document.getElementById('btn-sair-sala');
     if(btnSair) {
         btnSair.addEventListener('click', () => {
+            socket.off("EntrouNaSala")
+            socket.off("SaiuDaSala")
             window.location.hash = '#salas';
         });
     }

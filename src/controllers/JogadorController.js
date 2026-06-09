@@ -40,10 +40,8 @@ exports.criarJogador = async (req, res) => {
             success: true,
             message: 'Jogador cadastrado!',
             jogador: {
-                id: jogador._id,
                 email: jogador.email,
-                nome: jogador.nome,
-                dataCadastro: jogador.dataCadastro
+                nome: jogador.nome
             }
         });
     } catch (error) {
@@ -149,7 +147,7 @@ exports.loginConvidado = async (req, res)=> {
 
         if(nome.trim() != "") {
             const token = jwt.sign(
-                { id: TempId, nome, logado: false }, 
+                { id: TempId, nome: nome+"(Convidado)", logado: false }, 
                 process.env.JWTSECRET, 
                 { expiresIn: '1h' }
             );

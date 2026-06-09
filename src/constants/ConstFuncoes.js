@@ -17,7 +17,7 @@ exports.Funcoes = {
                 if(exports.Funcoes[Alvo.funcao].equipe.toUpperCase() == "LOBOS"){
                     return {erro: "Lobo não pode atacar alguem da propria equipe"}
                 }
-                Alvo.efeitos.push("MATAR") //Adicionar "MATAR" na lista de efeitos do jogador
+                //Alvo.efeitos.push("MATAR") //Adicionar "MATAR" na lista de efeitos do jogador
                 return { ok: true }
             }catch(erro){
                 return { erro }

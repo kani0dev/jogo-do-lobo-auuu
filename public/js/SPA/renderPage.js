@@ -6,7 +6,8 @@ socket.manualDisconnect = false;
 // });
 
 socket.on("erro", (erro) => {
-    alert(JSON.stringify(erro.erro))
+    console.log(erro)
+    alert(JSON.stringify(erro))
 })
 
 socket.on("connect_error", (erro) => {
@@ -32,6 +33,7 @@ socket.on("disconnecting", () => {
 
 // js/renderPage.js
 import { TelaLogin, iniciarTelaLogin } from './paginas/login.js';
+import { TelaCadastro, iniciarTelaCadastro} from './paginas/cadastro.js'
 import { TelaLobby, iniciarTelaLobby } from './paginas/lobby.js';
 import { TelaSalas, iniciarTelaSalas} from './paginas/salas.js';
 import { TelaJogo, iniciarTelaJogo } from './paginas/jogo.js';
@@ -51,6 +53,10 @@ function roteadorSPA() {
             case '#login':
                 appContainer.innerHTML = TelaLogin();
                 iniciarTelaLogin();
+                break;
+            case '#cadastro':
+                appContainer.innerHTML = TelaCadastro();
+                iniciarTelaCadastro();
                 break;
             case '#salas':
                 appContainer.innerHTML = TelaSalas();
@@ -77,7 +83,7 @@ function roteadorSPA() {
 window.addEventListener('hashchange', (event) => {
     const hash = window.location.hash
     const tokenSalvo = localStorage.getItem('token_lobitos');
-    if(!tokenSalvo && !(hash == "#login")) {
+    if(!tokenSalvo && !["#login", "#cadastro"].includes(hash)) {
         alert("Para entrar na pagina: '"+hash+"', é nescessário logar ou entrar como convidado")
         window.location.hash = "#login"
         if(!socket.disconnected){

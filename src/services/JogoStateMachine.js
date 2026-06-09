@@ -5,7 +5,7 @@ const ConstFuncoes = require("../constants/ConstFuncoes")
 
 // Esse arquivo é quem vai controlar os estados da sala, um chamado "Maquina de estados" ou "StateMachine"
 
-exports.MudaEstadoDaSala = (Sala) => {
+exports.AvancaEstadoDaSala = (Sala) => {
     try{ 
         switch(Sala.sala_estado.toUpperCase()){
             case "ESPERANDO":
@@ -13,17 +13,19 @@ exports.MudaEstadoDaSala = (Sala) => {
                 JogoService.DistribuirPapeis(Sala)
                 break;
             case "NOITE":
+                var Mortos = []
                 for(const j of Object.values(Sala.jogadores)){
                     if(j.estado.toUpperCase() == "MORTO"){ //ignora players mortos
                         continue
                     }
                     if(j.efeitos.includes("MATAR") && !j.efeitos.includes("PROTEGER")){
                         j.estado = "MORTO"
+                        Mortos.push(j)
                     }
                 }
                 Sala.sala_estado = "DISCUSSÃO"
                 break;
-            case "DISCUSSÃO": 
+            case "DISCUSSÃO":
                 Sala.chat = []
                 Sala.sala_estado = "DIA"
                 break;
@@ -32,6 +34,7 @@ exports.MudaEstadoDaSala = (Sala) => {
                 if(resposta.dados && resposta.dados.jogador){
                     resposta.dados.jogador.estado = "MORTO"
                 }
+                Sala.votos = []
                 Sala.sala_estado = "NOITE"
                 break;
         }
@@ -51,7 +54,7 @@ exports.MudaEstadoDaSala = (Sala) => {
             }
             j.estado = "NAO PRONTO"
         }
-        return {ok: true, dados: {Sala, NovoEstado: Sala.sala_estado, mensagem: "Sala "+Sala.codigo+" mudou o estado para: "+Sala.sala_estado}}
+        return {ok: true, dados: {Sala, Mortos, NovoEstado: Sala.sala_estado, mensagem: "Sala "+Sala.codigo+" mudou o estado para: "+Sala.sala_estado}}
     }catch(erro){
         return { erro }
     }

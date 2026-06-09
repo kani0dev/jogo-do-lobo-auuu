@@ -80,6 +80,7 @@ export async function iniciarTelaSalas() {
             botao.addEventListener('click', () => {
                 const codigoSala = botao.getAttribute('data-codigo');
                 localStorage.setItem('codigo_sala_lobitos', codigoSala);
+                socket.off("AtualizarSalas")
                 window.location.hash = '#lobby';
             });
         });
@@ -104,6 +105,7 @@ export async function iniciarTelaSalas() {
             socket.emit("CriarSala", (resposta) => {
                 if(resposta.ok){
                     localStorage.setItem('codigo_sala_lobitos', resposta.dados.Sala.codigo);
+                    socket.off("AtualizarSalas")
                     window.location.hash = '#lobby'; 
                 }
             })
