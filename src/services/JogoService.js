@@ -150,7 +150,7 @@ exports.FinalizarTurno = async (socket, jogador, codigo) => {
         
         const resposta = JogoStateMachine.AvancaEstadoDaSala(Sala)
         if(resposta.erro){
-            return { erro }
+            return { erro: resposta.erro }
         }
         await SalaManager.salvarSala(Sala)
         return resposta

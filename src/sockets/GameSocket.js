@@ -81,6 +81,12 @@ module.exports = (io) => {
             }
         });
 
+        const emitirFim = (resposta) => {
+            if (resposta && resposta.dados && resposta.dados.fim && socket.codigoDaSala) {
+                io.to(socket.codigoDaSala + "_GERAL").emit("Fim", resposta)
+            }
+        }
+
         socket.on("ListarSalasPublicas", async (callback) => {
             const salasPublicas = await SalaManager.listarSalasPublicas()
             callback({ ok: true, dados:{salas: salasPublicas}})
@@ -111,7 +117,15 @@ module.exports = (io) => {
                 };
             }
             const jogador = Sala.jogadores[socket.jogador.id]
+            if(!jogador){
+                socket.emit("erro", {erro: socket.jogador.nome + " não encontrado na sala "+socket.codigoDaSala})
+                return {erro: socket.jogador.nome + " não encontrado na sala "+socket.codigoDaSala}
+            }
             const Funcao = ConstFuncoes.Funcoes[jogador.funcao]
+            if(!Funcao){
+                socket.emit("erro", { erro: `Função '${jogador.funcao}' não encontrada` })
+                return { erro: `Função '${jogador.funcao}' não encontrada` }
+            }
             const FuncaoDoJogador = {
                 nome: Funcao.nome,
                 descricao: Funcao.descricao,
@@ -155,6 +169,7 @@ module.exports = (io) => {
 
         socket.on("IniciarPartida", async (callback) => {
             const resposta = await SalaManager.ComecarJogo(socket, socket.jogador, socket.codigoDaSala)
+            console.log(resposta)
             if(callback){
                 callback(resposta)
             }
@@ -194,6 +209,7 @@ module.exports = (io) => {
                 if(respostaTurno.dados.NovoEstado){
                     io.to(socket.codigoDaSala+"_GERAL").emit("MudouEstado", respostaTurno)
                 }
+                emitirFim(respostaTurno)
             }
             if(respostaAcao.erro){
                 socket.emit("erro", respostaAcao)
@@ -208,12 +224,14 @@ module.exports = (io) => {
             }
             if(respostaVotacao.ok){
                 const respostaTurno = await JogoService.FinalizarTurno(socket, socket.jogador, socket.codigoDaSala)
+                console.log(respostaTurno)
                 if(respostaTurno.ok){
                     io.to(socket.codigoDaSala+"_GERAL").emit("MaisUmPronto")
                 }
                 if(respostaTurno.dados.NovoEstado){
                     io.to(socket.codigoDaSala+"_GERAL").emit("MudouEstado", respostaTurno)
                 }
+                emitirFim(respostaTurno)
             }
             if(respostaVotacao.erro){
                 socket.emit("erro", respostaVotacao)
@@ -232,6 +250,7 @@ module.exports = (io) => {
             if(resposta.dados.NovoEstado){
                 io.to(socket.codigoDaSala+"_GERAL").emit("MudouEstado", resposta)
             }
+            emitirFim(resposta)
             if(resposta.erro){
                 socket.emit("erro", resposta)
             }

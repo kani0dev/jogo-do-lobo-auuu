@@ -17,7 +17,7 @@ exports.listarSalasPublicas = async () => {
     )
 }
 
-exports.CriarSala = async (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1}, {nome:"São Bernardo", quantidade: 1}]}) => {
+exports.CriarSala = async (socket, jogador, config = {privacidade: "PUBLICO", funcoes :[{nome:"Lobo", quantidade: 1}, {nome:"Medico", quantidade: 1}]}) => {
     try{
         const totalJogadores = config.funcoes.reduce((total, funcao) => total + funcao.quantidade, 0)
         if(totalJogadores < 2 || totalJogadores > 20){
@@ -126,6 +126,7 @@ exports.SairSala = async (socket, jogador, codigo) => {
 
         if(Object.keys(Sala.jogadores).length <= 0){
             await removerSala(codigo)
+            JogoStateMachine.CancelarTimerEstado(codigo)
             return { ok: true, dados:{Sala: false, jogador, message: jogador.nome + " saiu da sala "+codigo+" com sucesso"}}
         }else{
             await salvarSala(Sala)

@@ -75,5 +75,4 @@ server.listen(PORT, () => {
     });
     repl.context.JogoService = require('./src/services/JogoService');
     repl.context.SalaManager = require('./src/services/SalaManager');
-    
 });

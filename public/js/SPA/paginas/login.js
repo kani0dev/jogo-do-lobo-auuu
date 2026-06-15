@@ -6,9 +6,9 @@ export function TelaLogin() {
             <h2>Entrar no Lobitos</h2>
             <input type="text" id="nome-jogador" placeholder="Digite seu nome de usuário"/>
             <input type="password" id="senha-jogador" placeholder="Digite sua senha"/>
-            <button id="btn-logar">Entrar no Jogo</button>
+            <button id="btn-logar">Entrar no Jogo</button><br>
             <input type="text" id="nome-convidado" placeholder="Digite seu nome de usuário"/>
-            <button id="btn-convidado">Entrar como convidado</button>
+            <button id="btn-convidado">Entrar como convidado</button><br>
             <a href="#cadastro">Criar uma conta</a>
         </div>
     `;

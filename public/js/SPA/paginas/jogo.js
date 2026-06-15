@@ -35,6 +35,8 @@ export function iniciarTelaJogo() {
         return
     }
 
+
+
     function ConectarSala() {
         socket.emit('ReconectarSala', codigoSala, (resposta) => {
             if (resposta.ok) {
@@ -70,11 +72,28 @@ export function iniciarTelaJogo() {
     const btnSair = document.getElementById('btn-sair-jogo')
     btnSair.addEventListener("click", () => {
         socket.off("MudouEstado")
+        socket.off("Fim")
         window.location.hash = "#salas"
     })
 
     socket.once('carregarJogador', (jogador) => {
         socket.jogador = jogador
+    })
+
+    socket.on("Fim", (resposta) => {
+        if (resposta.erro) {
+            console.log(resposta)
+            return
+        }
+        socket.off("MudouEstado")
+        socket.off("Fim")
+
+        const vencedor = resposta.dados?.equipeVencedora || resposta.dados?.mensagem || "Equipe vencedora desconhecida"
+        MostrarVencedor(vencedor)
+
+        setTimeout(() => {
+            window.location.hash = "#lobby"
+        }, 4000)
     })
 
     socket.on("MudouEstado", (requisicao) => {
@@ -84,8 +103,8 @@ export function iniciarTelaJogo() {
             return
         }
         AtualizarSala(requisicao.dados.Sala, requisicao.dados.Mortos)
-        
     })
+    
 
     
     
@@ -115,12 +134,13 @@ export function iniciarTelaJogo() {
                 ListarJogadores(Sala, "Votar")
                 renderChat(Sala.chat)
                 break;
-            case "DIA":
+            case "PÓS NOITE":
+            case "PÓS DISCUSSÃO":
                 ListarMortos(Mortos)
                 ConectarBtnAvancar()
                 break;
             default:
-                console.log("Mudou prum estado que eu nn conheco")
+                console.log("Mudou pra um estado que eu nn conheco")
                 break;
         }
     }
@@ -167,6 +187,20 @@ function ListarJogadores(Sala, Evento){
             confirmarAcao.disabled = true
         })
     })
+    if(Evento == "Votar"){
+        const pularVotacao = document.createElement("button")
+        pularVotacao.innerText = "Confirmar"
+        pularVotacao.disabled = false
+        pularVotacao.addEventListener("click", () => {
+            socket.emit(Evento, null, (resposta)=>{
+                if(resposta.erro){
+                console.log(resposta)
+                return
+            }
+            confirmarAcao.disabled = true
+            })
+        })
+    }
 
     opcoesAcao.appendChild(confirmarAcao)
 }
@@ -224,6 +258,7 @@ function renderChat(chat){
 }
 
 function ListarMortos(Mortos){
+    console.log(Mortos)
     const opcoesAcao = document.getElementById("opcoes-acao")
     if(Mortos.length == 0){
         opcoesAcao.innerHTML = "<h3>Não houve mortos nessa noite</h3>"
@@ -233,4 +268,25 @@ function ListarMortos(Mortos){
             opcoesAcao.innerHTML += `<p>${j.nome}</p>`
         }
     }
+}
+
+function MostrarVencedor(vencedor){
+    const opcoesAcao = document.getElementById('opcoes-acao')
+    const painelChat = document.getElementById('painel-chat')
+
+    const mensagemVencedor = typeof vencedor === 'string' && vencedor.trim().length > 0
+        ? `A equipe vencedora foi: ${vencedor}`
+        : 'A equipe vencedora foi determinada.'
+
+    opcoesAcao.innerHTML = `
+        <div>
+            <h2>Fim de jogo</h2>
+            <p>${mensagemVencedor}</p>
+        </div>
+    `
+    painelChat.innerHTML = `<p>Voltando ao lobby em instantes...</p>`
+}
+
+function Falar(texto){
+    
 }

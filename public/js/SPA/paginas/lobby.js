@@ -107,12 +107,14 @@ export function iniciarTelaLobby() {
             const btnIniciar = document.getElementById('btn-iniciar-jogo');
             btnIniciar.addEventListener('click', () => {
                 socket.emit('IniciarPartida', (resposta)=>{
+                    
+                    console.log(JSON.stringify(resposta))
                     if(resposta.ok){
                         socket.off("EntrouNaSala")
                         socket.off("SaiuDaSala")
                         window.location.hash = "#jogo"
                     }else{
-                        console.log(resposta)
+                        console.log(JSON.stringify(resposta))
                     }
                 });
             });
